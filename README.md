@@ -1,16 +1,14 @@
 # Binance + Bitget Bot：UI 集成骨架
 
-这是一个**仅完成 Qt Designer UI 与 Python 源码关联、不包含交易功能**的项目骨架。
+这是一个**仅完成 Qt Designer UI 与 Python 源码关联、不包含交易功能**的 LIVE-only 项目骨架。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
 
 ## 固定技术栈
 
-- Python `3.14.x`
+- Python `>=3.14,<3.15`
 - PySide6 `6.11.1`
 - websockets `16.1`
 - requests `2.34.2`
 - Python 标准库：`asyncio`、`decimal`、`sqlite3`、`logging`、`unittest` 等
-
-> 注意：PyPI 当前发布的是 `websockets 16.1`，不存在 `16.1.1`，因此依赖已修正为可安装的 `websockets==16.1`。
 
 项目不直接采用其他第三方框架或 SDK：不使用 `httpx`、`aiohttp`、`CCXT`、`SQLAlchemy`、`aiosqlite`、`pydantic`、`orjson`、`keyring`、`structlog`、`pytest`、`ruff`、`mypy` 或 `PyInstaller`。
 
@@ -28,20 +26,15 @@
 
 ## 创建环境并启动
 
-```bash
-python3.14 -m venv .venv
+```text
+# Windows：仅首次创建根目录虚拟环境
+py -3.14 -m venv venv
 
-# Windows
-.venv\Scripts\activate
-
-# Linux / macOS
-source .venv/bin/activate
-
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-python scripts/validate_ui.py
-python -m unittest discover -s tests -p "test_*.py"
-python -m app.main
+.\venv\Scripts\python.exe -m pip install -r requirements.txt
+.\venv\Scripts\python.exe scripts\validate_ui.py
+.\venv\Scripts\python.exe scripts\check_project.py
+.\venv\Scripts\python.exe -m unittest discover -s tests -p "test_*.py"
+.\venv\Scripts\python.exe -m app.main
 ```
 
 ## UI 维护规则
@@ -53,3 +46,4 @@ python -m app.main
 5. Presenter 负责界面编排，但当前不实现交易功能。
 6. 领域层不得导入 PySide6、requests 或 websockets。
 7. 后续 HTTP 直接使用 `requests`；WebSocket 直接使用 `websockets`，不增加封装型网络依赖。
+8. `paperModeButton` 与 `paperOrderButton` 仅是遗留 objectName；界面与 Python 语义始终为 LIVE，不存在模式切换。

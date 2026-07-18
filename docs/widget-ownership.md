@@ -31,6 +31,8 @@ Owner: future `OrderEntryPresenter`
 - `paperOrderButton`
 - `confirmDualLegButton`
 
+`paperOrderButton` is a legacy Qt Designer objectName. Python binds it as `live_order_button`; the control is disabled until a later LIVE order stage and does not provide simulated ordering.
+
 ## Position and history area
 
 Owner: future `PositionPresenter`
@@ -53,3 +55,5 @@ Owner: `MainWindowPresenter`, future `ConnectionPresenter`, future `AccountPrese
 - connection and status labels
 
 All bindings are centralized in `app/ui/loader/widget_registry.py`.
+
+`paperModeButton` is also a legacy objectName. Python binds it as `live_mode_button`; its visible text identifies the fixed LIVE production environment and it never switches runtime mode.

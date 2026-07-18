@@ -15,12 +15,14 @@ def main() -> int:
     qt_app.setApplicationName("Binance + Bitget 套利终端")
     qt_app.setOrganizationName("Arbitrage Terminal")
 
-    runtime = build_application()
-    runtime.main_window.show()
-
-    exit_code = qt_app.exec()
-    runtime.shutdown()
-    return exit_code
+    runtime = None
+    try:
+        runtime = build_application()
+        runtime.main_window.show()
+        return qt_app.exec()
+    finally:
+        if runtime is not None:
+            runtime.shutdown()
 
 
 if __name__ == "__main__":

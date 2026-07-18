@@ -10,9 +10,13 @@ from app.ui.views.main_window import MainWindowView
 def build_application() -> ApplicationRuntime:
     """Build the UI object graph without creating any trading services."""
     main_window = MainWindowView()
-    presenter = MainWindowPresenter(main_window)
-    presenter.bind()
-    return ApplicationRuntime(
-        main_window=main_window,
-        main_window_presenter=presenter,
-    )
+    try:
+        presenter = MainWindowPresenter(main_window)
+        presenter.bind()
+        return ApplicationRuntime(
+            main_window=main_window,
+            main_window_presenter=presenter,
+        )
+    except Exception:
+        main_window.dispose()
+        raise

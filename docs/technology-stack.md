@@ -4,7 +4,7 @@
 
 | Component | Version / rule |
 |---|---|
-| Python | `3.14.x` |
+| Python | `>=3.14,<3.15` |
 | Qt binding | `PySide6==6.11.1` |
 | WebSocket | `websockets==16.1` |
 | HTTP | `requests==2.34.2` |
@@ -12,9 +12,7 @@
 | JSON | standard-library `json` |
 | Decimal math | standard-library `decimal` |
 | Logging | standard-library `logging` |
-| Tests | standard-library `unittest` |
-
-PyPI doesn't publish `websockets 16.1.1`; the valid release is `16.1`.
+| Tests | standard-library `unittest` and `unittest.mock` |
 
 ## Rules
 

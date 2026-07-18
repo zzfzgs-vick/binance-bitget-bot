@@ -190,13 +190,6 @@ binance-bitget-bot/
 │   │   ├── snapshot_reconciler.py
 │   │   ├── stale_data_detector.py
 │   │   └── subscription_manager.py
-│   ├── paper/
-│   │   ├── __init__.py
-│   │   ├── fault_simulator.py
-│   │   ├── paper_account.py
-│   │   ├── paper_broker.py
-│   │   ├── paper_fill_engine.py
-│   │   └── paper_order_book.py
 │   ├── persistence/
 │   │   ├── migrations/
 │   │   │   ├── versions/
@@ -288,8 +281,7 @@ binance-bitget-bot/
 │   │   ├── styles/
 │   │   │   ├── __init__.py
 │   │   │   ├── dark.qss
-│   │   │   ├── live_mode.qss
-│   │   │   └── paper_mode.qss
+│   │   │   └── live_mode.qss
 │   │   ├── views/
 │   │   │   ├── __init__.py
 │   │   │   └── main_window.py
@@ -309,10 +301,7 @@ binance-bitget-bot/
 │   ├── main.py
 │   └── version.py
 ├── config/
-│   ├── default.toml
-│   ├── development.toml
-│   ├── live.toml
-│   └── paper.toml
+│   └── live.toml
 ├── data/
 │   ├── .gitkeep
 │   └── README.md
@@ -339,10 +328,8 @@ binance-bitget-bot/
 │   ├── check_project.py
 │   ├── compile_resources.py
 │   ├── create_database.py
-│   ├── reset_paper_database.py
 │   ├── run_dev.py
 │   ├── run_live.py
-│   ├── run_paper.py
 │   └── validate_ui.py
 ├── tests/
 │   ├── fault_injection/
@@ -388,7 +375,6 @@ binance-bitget-bot/
 │   │   └── ui/
 │   │       └── .gitkeep
 │   └── __init__.py
-├── .env.example
 ├── .gitignore
 ├── LICENSE
 ├── pyproject.toml

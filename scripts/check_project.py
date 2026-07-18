@@ -6,6 +6,7 @@ import ast
 import compileall
 from pathlib import Path
 import sys
+import tomllib
 from xml.etree import ElementTree as ET
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -20,6 +21,29 @@ EXPECTED_REQUIREMENTS = {
     "websockets==16.1",
     "requests==2.34.2",
 }
+EXPECTED_PYTHON = ">=3.14,<3.15"
+FORBIDDEN_RUNTIME_PATHS = {
+    ".env.example",
+    "app/paper",
+    "app/ui/styles/paper_mode.qss",
+    "config/default.toml",
+    "config/development.toml",
+    "config/paper.toml",
+    "scripts/reset_paper_database.py",
+    "scripts/run_paper.py",
+}
+LIVE_ONLY_TERMS = {"paper", "testnet", "demo", "sandbox"}
+LEGACY_UI_NAMES = {"papermodebutton", "paperorderbutton"}
+VIEW_FORBIDDEN_IMPORTS = {
+    "app.exchanges",
+    "app.execution",
+    "app.market_data",
+    "app.persistence",
+    "app.infrastructure.network",
+    "sqlite3",
+    "tomllib",
+}
+DOMAIN_FORBIDDEN_IMPORTS = {"PySide6", "requests", "websockets"}
 
 
 def external_imports(path: Path) -> set[str]:
@@ -39,6 +63,13 @@ def external_imports(path: Path) -> set[str]:
 def main() -> int:
     failures: list[str] = []
 
+    with (PROJECT_ROOT / "pyproject.toml").open("rb") as pyproject_file:
+        project = tomllib.load(pyproject_file)["project"]
+    if project.get("requires-python") != EXPECTED_PYTHON:
+        failures.append(f"Python constraint mismatch: {project.get('requires-python')}")
+    if set(project.get("dependencies", ())) != EXPECTED_REQUIREMENTS:
+        failures.append(f"pyproject dependency mismatch: {project.get('dependencies')}")
+
     requirements = {
         line.strip() for line in (PROJECT_ROOT / "requirements.txt").read_text(
             encoding="utf-8"
@@ -47,10 +78,40 @@ def main() -> int:
     if requirements != EXPECTED_REQUIREMENTS:
         failures.append(f"requirements mismatch: {sorted(requirements)}")
 
+    for relative_path in FORBIDDEN_RUNTIME_PATHS:
+        if (PROJECT_ROOT / relative_path).exists():
+            failures.append(f"forbidden runtime path exists: {relative_path}")
+
     for path in (PROJECT_ROOT / "app").rglob("*.py"):
         unexpected = external_imports(path) - ALLOWED_EXTERNAL
         if unexpected:
             failures.append(f"unexpected imports in {path}: {sorted(unexpected)}")
+
+    for path in (PROJECT_ROOT / "app" / "ui" / "views").glob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        found = sorted(item for item in VIEW_FORBIDDEN_IMPORTS if item in source)
+        if found:
+            failures.append(f"view boundary violation in {path}: {found}")
+
+    for path in (PROJECT_ROOT / "app" / "domain").rglob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        found = sorted(item for item in DOMAIN_FORBIDDEN_IMPORTS if item in source)
+        if found:
+            failures.append(f"domain boundary violation in {path}: {found}")
+
+    runtime_suffixes = {".py", ".qss", ".toml", ".ui"}
+    for directory in ("app", "config", "scripts"):
+        for path in (PROJECT_ROOT / directory).rglob("*"):
+            if not path.is_file() or path.suffix.lower() not in runtime_suffixes:
+                continue
+            if path == PROJECT_ROOT / "scripts" / "check_project.py":
+                continue
+            text = path.read_text(encoding="utf-8").lower()
+            for legacy_name in LEGACY_UI_NAMES:
+                text = text.replace(legacy_name, "")
+            found = sorted(term for term in LIVE_ONLY_TERMS if term in text)
+            if found:
+                failures.append(f"non-LIVE runtime text in {path}: {found}")
 
     scan_suffixes = {".py", ".toml", ".txt", ".md", ".ini"}
     exemptions = {
@@ -59,7 +120,13 @@ def main() -> int:
         PROJECT_ROOT / "scripts" / "check_project.py",
     }
     for path in PROJECT_ROOT.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in scan_suffixes or path in exemptions:
+        if (
+            not path.is_file()
+            or path.suffix.lower() not in scan_suffixes
+            or path in exemptions
+            or "venv" in path.parts
+            or ".git" in path.parts
+        ):
             continue
         text = path.read_text(encoding="utf-8").lower()
         found = sorted(term for term in FORBIDDEN_TEXT if term in text)

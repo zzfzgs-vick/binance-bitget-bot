@@ -1,28 +1,19 @@
 {
-  "archive": "binance-bitget-bot.zip",
   "root_directory": "binance-bitget-bot",
-  "target_python": "3.14.x",
+  "target_python": ">=3.14,<3.15",
+  "validated_python": "3.14.5",
   "direct_dependencies": {
     "PySide6": "6.11.1",
-    "websockets": "16.1",
-    "requests": "2.34.2"
-  },
-  "requested_but_unavailable": {
-    "websockets": "16.1.1"
+    "requests": "2.34.2",
+    "websockets": "16.1"
   },
   "validation": {
-    "ui_xml": "PASS",
-    "required_widget_names": "PASS",
-    "qss_external": "PASS",
-    "dependency_pins": "PASS",
+    "ui_xml_and_contract": "PASS",
+    "runtime_qt_loading": "PASS",
+    "dependency_policy": "PASS",
     "external_import_policy": "PASS",
-    "forbidden_dependency_scan": "PASS",
-    "python_syntax": "PASS (builder Python 3.13.5; target metadata Python 3.14.x)",
-    "unittest_exit_code": 0,
-    "unittest_output": "test_domain_has_no_infrastructure_imports (ui.test_architecture_boundaries.ArchitectureBoundaryTests.test_domain_has_no_infrastructure_imports) ... ok\ntest_views_do_not_import_trading_implementations (ui.test_architecture_boundaries.ArchitectureBoundaryTests.test_views_do_not_import_trading_implementations) ... ok\ntest_mainwindow_runtime_load (ui.test_mainwindow_ui_load.MainWindowRuntimeTests.test_mainwindow_runtime_load) ... skipped 'PySide6 is not installed'\ntest_mainwindow_ui_is_well_formed (ui.test_mainwindow_ui_static.MainWindowStaticTests.test_mainwindow_ui_is_well_formed) ... ok\ntest_stylesheet_is_external (ui.test_mainwindow_ui_static.MainWindowStaticTests.test_stylesheet_is_external) ... ok\ntest_presenter_binds_all_table_models (ui.test_model_binding.ModelBindingTests.test_presenter_binds_all_table_models) ... skipped 'PySide6 is not installed'\ntest_required_widget_names_exist (ui.test_widget_names.WidgetNameTests.test_required_widget_names_exist) ... ok\n\n----------------------------------------------------------------------\nRan 7 tests in 0.011s\n\nOK (skipped=2)\n",
-    "project_checker_exit_code": 0,
-    "project_checker_output": "PASS: dependency policy\nPASS: source import boundary\nPASS: UI/source contract\nPASS: Python syntax\n"
-  },
-  "source_file_count": 321,
-  "cache_files_removed": true
+    "python_syntax": "PASS",
+    "unittest": "PASS (21 tests)",
+    "module_start_and_close": "PASS"
+  }
 }

@@ -3,7 +3,7 @@ name = "binance-bitget-bot"
 version = "0.1.0"
 description = "PySide6 UI integration skeleton for a Binance + Bitget spot-perpetual arbitrage desktop terminal."
 readme = "README.md"
-requires-python = "==3.14.*"
+requires-python = ">=3.14,<3.15"
 license = { text = "Proprietary" }
 authors = [{ name = "Project Owner" }]
 dependencies = [

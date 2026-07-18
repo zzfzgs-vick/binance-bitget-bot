@@ -49,7 +49,7 @@ def load_typed_ui(
     if not isinstance(widget, expected_type):
         widget.deleteLater()
         raise UiLoadError(
-            "UI 根控件类型错误: "
+            f"UI 根控件类型错误: {ui_path.expanduser().resolve()}; "
             f"期望 {expected_type.__name__}, 实际 {type(widget).__name__}"
         )
     return cast(TWidget, widget)

@@ -30,10 +30,15 @@ class WidgetBindingError(RuntimeError):
 
 def required_child(root: QObject, widget_type: type[TObject], object_name: str) -> TObject:
     """Find one required child and validate its runtime type."""
-    child = root.findChild(widget_type, object_name)
+    child = root.findChild(QObject, object_name)
     if child is None:
         raise WidgetBindingError(
-            f"mainwindow.ui 缺少控件或类型不匹配: {object_name} ({widget_type.__name__})"
+            f"mainwindow.ui 缺少控件: {object_name} (期望 {widget_type.__name__})"
+        )
+    if not isinstance(child, widget_type):
+        raise WidgetBindingError(
+            f"mainwindow.ui 控件类型错误: {object_name} "
+            f"(期望 {widget_type.__name__}, 实际 {type(child).__name__})"
         )
     return cast(TObject, child)
 
@@ -70,7 +75,7 @@ class MainWindowWidgets:
     perpetual_limit_price: QDoubleSpinBox
     margin_buffer: QDoubleSpinBox
     refresh_quote_button: QPushButton
-    paper_order_button: QPushButton
+    live_order_button: QPushButton
     confirm_dual_leg_button: QPushButton
 
     # Tables
@@ -80,7 +85,7 @@ class MainWindowWidgets:
     funding_history_table: QTableView
 
     # Top-level controls
-    paper_mode_button: QPushButton
+    live_mode_button: QPushButton
     refresh_products_button: QPushButton
     refresh_accounts_button: QPushButton
     settings_button: QPushButton
@@ -126,13 +131,13 @@ class MainWindowWidgets:
             ),
             margin_buffer=get(QDoubleSpinBox, "marginBufferDoubleSpinBox"),
             refresh_quote_button=get(QPushButton, "refreshQuoteButton"),
-            paper_order_button=get(QPushButton, "paperOrderButton"),
+            live_order_button=get(QPushButton, "paperOrderButton"),
             confirm_dual_leg_button=get(QPushButton, "confirmDualLegButton"),
             position_table=get(QTableView, "positionTableView"),
             executing_orders_table=get(QTableView, "executingOrdersTableView"),
             order_history_table=get(QTableView, "orderHistoryTableView"),
             funding_history_table=get(QTableView, "fundingHistoryTableView"),
-            paper_mode_button=get(QPushButton, "paperModeButton"),
+            live_mode_button=get(QPushButton, "paperModeButton"),
             refresh_products_button=get(QPushButton, "refreshProductsButton"),
             refresh_accounts_button=get(QPushButton, "refreshAccountsButton"),
             settings_button=get(QPushButton, "settingsButton"),

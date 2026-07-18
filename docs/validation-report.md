@@ -1,17 +1,11 @@
 # Validation report
 
-- Target Python: 3.14.x
-- Direct dependencies: PySide6 6.11.1, websockets 16.1, requests 2.34.2
-- UI XML: PASS
-- Required widget object names: PASS
-- QSS externalization: PASS
-- Source import policy: PASS
-- Forbidden dependency scan: PASS
-- Python syntax compile: PASS
-- Standard-library unittest suite: PASS (Qt runtime tests skip when PySide6 is unavailable)
-- Project checker: PASS
-- Runtime Qt rendering in build environment: not guaranteed because the exact target stack was not installed.
+- Validated Python: 3.14.5; required range: `>=3.14,<3.15`
+- Validated direct dependencies: PySide6 6.11.1, requests 2.34.2, websockets 16.1
+- UI XML, root widget, required object names, structural contract, and empty-state contract: PASS
+- Runtime Qt loading in offscreen mode: PASS
+- Dependency policy, source import boundaries, UI/source contract, and Python syntax: PASS
+- Standard-library unittest suite: PASS (21 tests)
+- `.\venv\Scripts\python.exe -m app.main` window creation and normal close: PASS
 
-## websockets version correction
-
-The requested `websockets 16.1.1` isn't a published PyPI release. The package uses the available `websockets==16.1`.
+No global Python or alternate virtual environment was used for validation.

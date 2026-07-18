@@ -1,4 +1,4 @@
-/* Optional mode overlay. Not activated by this UI-only skeleton. */
+/* Fixed LIVE badge style; the legacy objectName is retained by the UI contract. */
 QPushButton#paperModeButton {
     color: #ffdfdf;
     border-color: #c83f49;

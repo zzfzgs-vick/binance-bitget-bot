@@ -23,9 +23,13 @@ class MainWindowPresenter(QObject):
         self._executing_order_model = ExecutingOrderTableModel()
         self._order_history_model = OrderHistoryTableModel()
         self._funding_history_model = FundingHistoryTableModel()
+        self._is_bound = False
 
     def bind(self) -> None:
         """Associate the loaded UI tables with their source-side models."""
+        if self._is_bound:
+            return
+
         self._view.set_opportunity_model(self._opportunity_model)
         self._view.set_position_model(self._position_model)
         self._view.set_executing_order_model(self._executing_order_model)
@@ -37,4 +41,5 @@ class MainWindowPresenter(QObject):
             lambda _selected, _deselected: self._view.opportunity_selection_changed.emit()
         )
 
-        self._view.widgets.system_ready_status_label.setText("●  UI 骨架已加载")
+        self._view.set_initial_state()
+        self._is_bound = True

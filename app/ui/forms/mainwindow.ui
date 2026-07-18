@@ -62,6 +62,9 @@
        </property>
        <item>
         <widget class="QPushButton" name="paperModeButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
          <property name="minimumSize">
           <size>
            <width>104</width>
@@ -69,47 +72,50 @@
           </size>
          </property>
          <property name="text">
-          <string>PAPER  ▾</string>
+           <string>LIVE 正式实盘</string>
+          </property>
+          <property name="toolTip">
+           <string>仅支持正式实盘环境，不提供模式切换</string>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="binancePublicStatusLabel">
          <property name="text">
-          <string>●  Binance 公共</string>
+           <string>○  Binance 公共：未连接</string>
          </property>
          <property name="positive" stdset="0">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="binancePrivateStatusLabel">
          <property name="text">
-          <string>●  Binance 私有</string>
+           <string>○  Binance 私有：未连接</string>
          </property>
          <property name="positive" stdset="0">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="bitgetPublicStatusLabel">
          <property name="text">
-          <string>●  Bitget 公共</string>
+           <string>○  Bitget 公共：未连接</string>
          </property>
          <property name="positive" stdset="0">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="bitgetPrivateStatusLabel">
          <property name="text">
-          <string>●  Bitget 私有</string>
+           <string>○  Bitget 私有：未连接</string>
          </property>
          <property name="positive" stdset="0">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -144,10 +150,10 @@
           <item>
            <widget class="QLabel" name="binanceSpotBalanceValueLabel">
             <property name="text">
-             <string>USDT  12,450</string>
+           <string>—</string>
             </property>
             <property name="positive" stdset="0">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -185,10 +191,10 @@
           <item>
            <widget class="QLabel" name="binancePerpBalanceValueLabel">
             <property name="text">
-             <string>USDT  2,860</string>
+           <string>—</string>
             </property>
             <property name="positive" stdset="0">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -226,10 +232,10 @@
           <item>
            <widget class="QLabel" name="bitgetSpotBalanceValueLabel">
             <property name="text">
-             <string>USDT  8,920</string>
+           <string>—</string>
             </property>
             <property name="positive" stdset="0">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -267,10 +273,10 @@
           <item>
            <widget class="QLabel" name="bitgetPerpBalanceValueLabel">
             <property name="text">
-             <string>USDT  3,280</string>
+           <string>—</string>
             </property>
             <property name="positive" stdset="0">
-             <bool>true</bool>
+             <bool>false</bool>
             </property>
            </widget>
           </item>
@@ -292,39 +298,63 @@
        </item>
        <item>
         <widget class="QPushButton" name="refreshProductsButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
          <property name="text">
-          <string>⟳  产品刷新</string>
-         </property>
+           <string>⟳  产品刷新</string>
+          </property>
+          <property name="toolTip">
+           <string>产品接入将在后续阶段实现</string>
+          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="refreshAccountsButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
          <property name="text">
-          <string>⟳  账户刷新</string>
-         </property>
+           <string>⟳  账户刷新</string>
+          </property>
+          <property name="toolTip">
+           <string>账户接入将在后续阶段实现</string>
+          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="settingsButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
          <property name="text">
-          <string>⚙  设置</string>
-         </property>
+           <string>⚙  设置</string>
+          </property>
+          <property name="toolTip">
+           <string>配置功能将在后续阶段实现</string>
+          </property>
         </widget>
        </item>
        <item>
         <widget class="QPushButton" name="systemLogButton">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
          <property name="text">
-          <string>▤  系统日志</string>
-         </property>
+           <string>▤  系统日志</string>
+          </property>
+          <property name="toolTip">
+           <string>日志功能将在后续阶段实现</string>
+          </property>
         </widget>
        </item>
        <item>
         <widget class="QLabel" name="topLatencyLabel">
          <property name="text">
-          <string>● 延迟 86ms</string>
+           <string>○ 延迟 —</string>
          </property>
          <property name="positive" stdset="0">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -402,6 +432,9 @@
             </property>
             <item>
              <widget class="QLineEdit" name="symbolSearchLineEdit">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>145</width>
@@ -409,10 +442,7 @@
                </size>
               </property>
               <property name="placeholderText">
-               <string>搜索交易对</string>
-              </property>
-              <property name="text">
-               <string>ETHUSDT</string>
+               <string>交易对将在后续阶段接入</string>
               </property>
              </widget>
             </item>
@@ -428,37 +458,15 @@
             </item>
             <item>
              <widget class="QComboBox" name="scanAmountComboBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>115</width>
                 <height>0</height>
                </size>
               </property>
-              <item>
-               <property name="text">
-                <string>100 USDT</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>500 USDT</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>1000 USDT</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>5000 USDT</string>
-               </property>
-              </item>
-              <item>
-               <property name="text">
-                <string>10000 USDT</string>
-               </property>
-              </item>
              </widget>
             </item>
             <item>
@@ -473,6 +481,12 @@
             </item>
             <item>
              <widget class="QDoubleSpinBox" name="minimumPnlDoubleSpinBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="specialValueText">
+               <string>—</string>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>86</width>
@@ -486,7 +500,7 @@
                <double>999999.000000000000000</double>
               </property>
               <property name="value">
-               <double>1.000000000000000</double>
+               <double>0.000000000000000</double>
               </property>
              </widget>
             </item>
@@ -502,6 +516,12 @@
             </item>
             <item>
              <widget class="QDoubleSpinBox" name="minimumFundingDoubleSpinBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="specialValueText">
+               <string>—</string>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>80</width>
@@ -520,30 +540,42 @@
               <property name="suffix">
                <string> %</string>
               </property>
+              <property name="value">
+               <double>-100.000000000000000</double>
+              </property>
              </widget>
             </item>
             <item>
              <widget class="QCheckBox" name="profitableOnlyCheckBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>只显示盈利</string>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QCheckBox" name="executableOnlyCheckBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>只显示可下单</string>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
              </widget>
             </item>
             <item>
              <widget class="QCheckBox" name="favoritesOnlyCheckBox">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
               <property name="text">
                <string>收藏</string>
               </property>
@@ -610,7 +642,7 @@
             <item>
              <widget class="QLabel" name="selectedOpportunityTitleLabel">
               <property name="text">
-               <string>⌄  ETHUSDT · Binance 现货 → Bitget 永续</string>
+               <string>尚未选择套利机会</string>
               </property>
              </widget>
             </item>
@@ -635,7 +667,7 @@
               <item row="0" column="1">
                <widget class="QLabel" name="spotDepthValueLabel">
                 <property name="text">
-                 <string>1 ETH 内滑点 0.01%</string>
+               <string>—</string>
                 </property>
                </widget>
               </item>
@@ -652,7 +684,7 @@
               <item row="0" column="3">
                <widget class="QLabel" name="perpDepthValueLabel">
                 <property name="text">
-                 <string>1 ETH 内滑点 0.02%</string>
+               <string>—</string>
                 </property>
                </widget>
               </item>
@@ -669,7 +701,7 @@
               <item row="0" column="5">
                <widget class="QLabel" name="entryFeeDetailValueLabel">
                 <property name="text">
-                 <string>1.81 USDT</string>
+               <string>—</string>
                 </property>
                </widget>
               </item>
@@ -686,7 +718,7 @@
               <item row="1" column="1">
                <widget class="QLabel" name="exitFeeDetailValueLabel">
                 <property name="text">
-                 <string>2.74 USDT</string>
+               <string>—</string>
                 </property>
                </widget>
               </item>
@@ -703,7 +735,7 @@
               <item row="1" column="3">
                <widget class="QLabel" name="fundingIncomeDetailValueLabel">
                 <property name="text">
-                 <string>0.08 USDT</string>
+               <string>—</string>
                 </property>
                </widget>
               </item>
@@ -720,7 +752,7 @@
               <item row="1" column="5">
                <widget class="QLabel" name="nextFundingValueLabel">
                 <property name="text">
-                 <string>02:41:28</string>
+               <string>—</string>
                 </property>
                </widget>
               </item>
@@ -790,14 +822,14 @@
               <item>
                <widget class="QLabel" name="selectedSymbolLabel">
                 <property name="text">
-                 <string>ETHUSDT</string>
+                 <string>—</string>
                 </property>
                </widget>
               </item>
               <item>
                <widget class="QLabel" name="selectedRouteLabel">
                 <property name="text">
-                 <string>Binance 现货买入 → Bitget 永续做空</string>
+                 <string>尚未选择套利机会</string>
                 </property>
                </widget>
               </item>
@@ -834,7 +866,7 @@
               <item>
                <widget class="QLabel" name="expectedPnlValueLabel">
                 <property name="text">
-                 <string>+13.73 USDT</string>
+               <string>—</string>
                 </property>
                 <property name="alignment">
                  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -903,7 +935,7 @@
                 <item row="0" column="1">
                  <widget class="QLabel" name="spotExchangeValueLabel">
                   <property name="text">
-                   <string>Binance</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -920,7 +952,7 @@
                 <item row="1" column="1">
                  <widget class="QLabel" name="spotSymbolValueLabel">
                   <property name="text">
-                   <string>ETHUSDT</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -937,7 +969,7 @@
                 <item row="2" column="1">
                  <widget class="QLabel" name="spotDirectionValueLabel">
                   <property name="text">
-                   <string>BUY</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -954,7 +986,7 @@
                 <item row="3" column="1">
                  <widget class="QLabel" name="spotBestAskValueLabel">
                   <property name="text">
-                   <string>1,830.00</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -971,7 +1003,7 @@
                 <item row="4" column="1">
                  <widget class="QLabel" name="spotVwapValueLabel">
                   <property name="text">
-                   <string>1,830.20</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1000,6 +1032,12 @@
                 </item>
                 <item row="0" column="1">
                  <widget class="QDoubleSpinBox" name="spotInvestmentDoubleSpinBox">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="specialValueText">
+                   <string>—</string>
+                  </property>
                   <property name="minimumSize">
                    <size>
                     <width>145</width>
@@ -1013,7 +1051,7 @@
                    <double>1000000000.000000000000000</double>
                   </property>
                   <property name="value">
-                   <double>1830.000000000000000</double>
+                    <double>0.000000000000000</double>
                   </property>
                   <property name="suffix">
                    <string> USDT</string>
@@ -1032,6 +1070,12 @@
                 </item>
                 <item row="1" column="1">
                  <widget class="QDoubleSpinBox" name="spotMaxSlippageDoubleSpinBox">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="specialValueText">
+                   <string>—</string>
+                  </property>
                   <property name="decimals">
                    <number>2</number>
                   </property>
@@ -1039,7 +1083,7 @@
                    <double>100.000000000000000</double>
                   </property>
                   <property name="value">
-                   <double>0.100000000000000</double>
+                    <double>0.000000000000000</double>
                   </property>
                   <property name="suffix">
                    <string> %</string>
@@ -1058,21 +1102,9 @@
                 </item>
                 <item row="2" column="1">
                  <widget class="QComboBox" name="spotOrderTypeComboBox">
-                  <item>
-                   <property name="text">
-                    <string>IOC限价</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>市价</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>GTC限价</string>
-                   </property>
-                  </item>
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                  </widget>
                 </item>
                 <item row="3" column="0">
@@ -1087,6 +1119,12 @@
                 </item>
                 <item row="3" column="1">
                  <widget class="QDoubleSpinBox" name="spotLimitPriceDoubleSpinBox">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="specialValueText">
+                   <string>—</string>
+                  </property>
                   <property name="decimals">
                    <number>8</number>
                   </property>
@@ -1094,7 +1132,7 @@
                    <double>1000000000.000000000000000</double>
                   </property>
                   <property name="value">
-                   <double>1831.830000000000000</double>
+                    <double>0.000000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -1124,7 +1162,7 @@
                 <item row="0" column="1">
                  <widget class="QLabel" name="rawSpotQuantityValueLabel">
                   <property name="text">
-                   <string>0.999891 ETH</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1141,7 +1179,7 @@
                 <item row="1" column="1">
                  <widget class="QLabel" name="commonSpotQuantityValueLabel">
                   <property name="text">
-                   <string>0.990000 ETH</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1158,7 +1196,7 @@
                 <item row="2" column="1">
                  <widget class="QLabel" name="spotFeeValueLabel">
                   <property name="text">
-                   <string>1.81 USDT</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1223,7 +1261,7 @@
                 <item row="0" column="1">
                  <widget class="QLabel" name="perpetualExchangeValueLabel">
                   <property name="text">
-                   <string>Bitget</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1240,7 +1278,7 @@
                 <item row="1" column="1">
                  <widget class="QLabel" name="perpetualContractValueLabel">
                   <property name="text">
-                   <string>ETHUSDT 永续</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1257,7 +1295,7 @@
                 <item row="2" column="1">
                  <widget class="QLabel" name="perpetualDirectionValueLabel">
                   <property name="text">
-                   <string>SELL / SHORT</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1274,7 +1312,7 @@
                 <item row="3" column="1">
                  <widget class="QLabel" name="perpetualBestBidValueLabel">
                   <property name="text">
-                   <string>1,850.00</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1291,7 +1329,7 @@
                 <item row="4" column="1">
                  <widget class="QLabel" name="perpetualVwapValueLabel">
                   <property name="text">
-                   <string>1,849.60</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1320,16 +1358,9 @@
                 </item>
                 <item row="0" column="1">
                  <widget class="QComboBox" name="marginModeComboBox">
-                  <item>
-                   <property name="text">
-                    <string>逐仓</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>全仓</string>
-                   </property>
-                  </item>
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                  </widget>
                 </item>
                 <item row="1" column="0">
@@ -1344,14 +1375,20 @@
                 </item>
                 <item row="1" column="1">
                  <widget class="QSpinBox" name="leverageSpinBox">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="specialValueText">
+                   <string>—</string>
+                  </property>
                   <property name="minimum">
-                   <number>1</number>
+                    <number>1</number>
                   </property>
                   <property name="maximum">
                    <number>125</number>
                   </property>
                   <property name="value">
-                   <number>5</number>
+                    <number>1</number>
                   </property>
                   <property name="suffix">
                    <string> ×</string>
@@ -1370,6 +1407,12 @@
                 </item>
                 <item row="2" column="1">
                  <widget class="QDoubleSpinBox" name="perpetualMaxSlippageDoubleSpinBox">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="specialValueText">
+                   <string>—</string>
+                  </property>
                   <property name="decimals">
                    <number>2</number>
                   </property>
@@ -1377,7 +1420,7 @@
                    <double>100.000000000000000</double>
                   </property>
                   <property name="value">
-                   <double>0.100000000000000</double>
+                    <double>0.000000000000000</double>
                   </property>
                   <property name="suffix">
                    <string> %</string>
@@ -1396,21 +1439,9 @@
                 </item>
                 <item row="3" column="1">
                  <widget class="QComboBox" name="perpetualOrderTypeComboBox">
-                  <item>
-                   <property name="text">
-                    <string>IOC限价</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>市价</string>
-                   </property>
-                  </item>
-                  <item>
-                   <property name="text">
-                    <string>GTC限价</string>
-                   </property>
-                  </item>
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                  </widget>
                 </item>
                 <item row="4" column="0">
@@ -1425,6 +1456,12 @@
                 </item>
                 <item row="4" column="1">
                  <widget class="QDoubleSpinBox" name="perpetualLimitPriceDoubleSpinBox">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="specialValueText">
+                   <string>—</string>
+                  </property>
                   <property name="decimals">
                    <number>8</number>
                   </property>
@@ -1432,7 +1469,7 @@
                    <double>1000000000.000000000000000</double>
                   </property>
                   <property name="value">
-                   <double>1847.750000000000000</double>
+                    <double>0.000000000000000</double>
                   </property>
                  </widget>
                 </item>
@@ -1462,7 +1499,7 @@
                 <item row="0" column="1">
                  <widget class="QLabel" name="shortQuantityValueLabel">
                   <property name="text">
-                   <string>0.990000 ETH</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1479,7 +1516,7 @@
                 <item row="1" column="1">
                  <widget class="QLabel" name="perpetualNotionalValueLabel">
                   <property name="text">
-                   <string>1,831.10 USDT</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1496,7 +1533,7 @@
                 <item row="2" column="1">
                  <widget class="QLabel" name="initialMarginValueLabel">
                   <property name="text">
-                   <string>366.22 USDT</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1512,6 +1549,12 @@
                 </item>
                 <item row="3" column="1">
                  <widget class="QDoubleSpinBox" name="marginBufferDoubleSpinBox">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
+                  <property name="specialValueText">
+                   <string>—</string>
+                  </property>
                   <property name="decimals">
                    <number>2</number>
                   </property>
@@ -1519,7 +1562,7 @@
                    <double>1000000000.000000000000000</double>
                   </property>
                   <property name="value">
-                   <double>100.000000000000000</double>
+                    <double>0.000000000000000</double>
                   </property>
                   <property name="suffix">
                    <string> USDT</string>
@@ -1539,7 +1582,7 @@
                 <item row="4" column="1">
                  <widget class="QLabel" name="perpetualFeeValueLabel">
                   <property name="text">
-                   <string>1.01 USDT</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1604,7 +1647,7 @@
                 <item row="0" column="1">
                  <widget class="QLabel" name="hedgeRatioValueLabel">
                   <property name="text">
-                   <string>100.000%</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1621,10 +1664,10 @@
                 <item row="1" column="1">
                  <widget class="QLabel" name="grossBasisPnlValueLabel">
                   <property name="text">
-                   <string>+19.21 USDT</string>
+                    <string>—</string>
                   </property>
                   <property name="positive" stdset="0">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -1641,7 +1684,7 @@
                 <item row="2" column="1">
                  <widget class="QLabel" name="entryFeeSummaryValueLabel">
                   <property name="text">
-                   <string>-2.82 USDT</string>
+                    <string>—</string>
                   </property>
                   <property name="negative" stdset="0">
                    <bool>true</bool>
@@ -1661,7 +1704,7 @@
                 <item row="3" column="1">
                  <widget class="QLabel" name="exitFeeSummaryValueLabel">
                   <property name="text">
-                   <string>-2.74 USDT</string>
+                    <string>—</string>
                   </property>
                   <property name="negative" stdset="0">
                    <bool>true</bool>
@@ -1681,10 +1724,10 @@
                 <item row="4" column="1">
                  <widget class="QLabel" name="fundingSummaryValueLabel">
                   <property name="text">
-                   <string>+0.08 USDT</string>
+                    <string>—</string>
                   </property>
                   <property name="positive" stdset="0">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -1714,10 +1757,10 @@
                 <item row="0" column="1">
                  <widget class="QLabel" name="netPnlSummaryValueLabel">
                   <property name="text">
-                   <string>+13.73 USDT</string>
+                    <string>—</string>
                   </property>
                   <property name="positive" stdset="0">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -1734,7 +1777,7 @@
                 <item row="1" column="1">
                  <widget class="QLabel" name="capitalUsedValueLabel">
                   <property name="text">
-                   <string>2,296.22 USDT</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1751,10 +1794,10 @@
                 <item row="2" column="1">
                  <widget class="QLabel" name="capitalRoiValueLabel">
                   <property name="text">
-                   <string>+0.598%</string>
+                    <string>—</string>
                   </property>
                   <property name="positive" stdset="0">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -1771,10 +1814,10 @@
                 <item row="3" column="1">
                  <widget class="QLabel" name="spotFundsStatusValueLabel">
                   <property name="text">
-                   <string>充足</string>
+                    <string>—</string>
                   </property>
                   <property name="positive" stdset="0">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -1791,10 +1834,10 @@
                 <item row="4" column="1">
                  <widget class="QLabel" name="perpetualFundsStatusValueLabel">
                   <property name="text">
-                   <string>充足</string>
+                    <string>—</string>
                   </property>
                   <property name="positive" stdset="0">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -1824,7 +1867,7 @@
                 <item row="0" column="1">
                  <widget class="QLabel" name="marketDataAgeValueLabel">
                   <property name="text">
-                   <string>86ms</string>
+                    <string>—</string>
                   </property>
                  </widget>
                 </item>
@@ -1842,23 +1885,41 @@
            </property>
            <item>
             <widget class="QPushButton" name="refreshQuoteButton">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
              <property name="text">
-              <string>⟳  刷新报价</string>
-             </property>
+               <string>⟳  刷新报价</string>
+              </property>
+              <property name="toolTip">
+               <string>行情接入将在后续阶段实现</string>
+              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="paperOrderButton">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
              <property name="text">
-              <string>⚗  模拟下单</string>
+               <string>LIVE 下单（未接入）</string>
+              </property>
+              <property name="toolTip">
+               <string>实盘下单将在后续阶段实现</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="confirmDualLegButton">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
              <property name="text">
-              <string>➤  确认双腿开仓</string>
-             </property>
+               <string>➤  确认双腿开仓</string>
+              </property>
+              <property name="toolTip">
+               <string>双腿下单将在后续阶段实现</string>
+              </property>
             </widget>
            </item>
           </layout>
@@ -1980,52 +2041,52 @@
                 <item>
                  <widget class="QLabel" name="positionIdLabel">
                   <property name="text">
-                   <string>●  ARB001</string>
+                   <string>暂无套利仓位</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="positionSpotLegLabel">
                   <property name="text">
-                   <string>现货腿：Binance  0.990000 ETH @ 1830.24</string>
+                   <string>现货腿：—</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="positionPerpetualLegLabel">
                   <property name="text">
-                   <string>永续腿：Bitget  0.990000 ETH @ 1849.52</string>
+                   <string>永续腿：—</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="positionLeverageLabel">
                   <property name="text">
-                   <string>杠杆：5×    保证金模式：逐仓</string>
+                   <string>杠杆：—    保证金模式：—</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="positionOpenBasisLabel">
                   <property name="text">
-                   <string>开仓价差：19.08 USDT</string>
+                   <string>开仓价差：—</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="positionFundingPaidLabel">
                   <property name="text">
-                   <string>累计资金费：0.163 USDT</string>
+                   <string>累计资金费：—</string>
                   </property>
                  </widget>
                 </item>
                 <item>
                  <widget class="QLabel" name="positionNetPnlLabel">
                   <property name="text">
-                   <string>组合净盈亏：+12.46 USDT</string>
+                   <string>组合净盈亏：—</string>
                   </property>
                   <property name="positive" stdset="0">
-                   <bool>true</bool>
+                   <bool>false</bool>
                   </property>
                  </widget>
                 </item>
@@ -2177,7 +2238,7 @@
        <item>
         <widget class="QLabel" name="systemReadyStatusLabel">
          <property name="text">
-          <string>●  系统就绪</string>
+          <string>●  UI 已加载</string>
          </property>
          <property name="positive" stdset="0">
           <bool>true</bool>
@@ -2203,10 +2264,10 @@
        <item>
         <widget class="QLabel" name="webSocketLatencyStatusLabel">
          <property name="text">
-          <string>●  WebSocket 延迟 86ms</string>
+          <string>○  WebSocket 未连接</string>
          </property>
          <property name="positive" stdset="0">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
         </widget>
        </item>
@@ -2229,7 +2290,7 @@
        <item>
         <widget class="QLabel" name="lastUpdatedStatusLabel">
          <property name="text">
-          <string>◷  最后更新时间 14:32:18</string>
+          <string>◷  最后更新时间 —</string>
          </property>
         </widget>
        </item>
@@ -2252,7 +2313,7 @@
        <item>
         <widget class="QLabel" name="warningStatusLabel">
          <property name="text">
-          <string>⚠  无未处理告警</string>
+          <string>⚠  告警 —</string>
          </property>
          <property name="warning" stdset="0">
           <bool>true</bool>
