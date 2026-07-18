@@ -15,3 +15,7 @@ class TradingRuleError(ValueError):
 
 class MarketDataError(ValueError):
     """A market message or normalized event is invalid."""
+
+
+class ArbitrageCalculationError(ValueError):
+    """An arbitrage opportunity cannot be calculated from the inputs."""

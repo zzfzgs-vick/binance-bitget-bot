@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from decimal import Decimal, ROUND_DOWN
+from math import lcm
 
 from app.domain.enums import Exchange, MarketType, TradingStatus
 from app.domain.exceptions import InstrumentDataError, TradingRuleError
@@ -20,6 +21,12 @@ def _positive_decimal(
 
 def _round_to_step(value: Decimal, step: Decimal) -> Decimal:
     return (value / step).to_integral_value(rounding=ROUND_DOWN) * step
+
+
+def _decimal_lcm(left: Decimal, right: Decimal) -> Decimal:
+    exponent = min(left.as_tuple().exponent, right.as_tuple().exponent, 0)
+    scale = Decimal(10) ** -exponent
+    return Decimal(lcm(int(left * scale), int(right * scale))) / scale
 
 
 @dataclass(frozen=True, slots=True)
@@ -54,19 +61,48 @@ class TradingRules:
         _positive_decimal(quantity, "quantity", TradingRuleError)
         normalized_price = _round_to_step(price, self.tick_size)
         normalized_quantity = _round_to_step(quantity, self.quantity_step)
-        if normalized_quantity < self.minimum_quantity:
+        self._validate_values(normalized_price, normalized_quantity)
+        return normalized_price, normalized_quantity
+
+    def validate_execution(
+        self, average_price: Decimal, quantity: Decimal
+    ) -> None:
+        """Validate an exact filled quantity and its volume-weighted price."""
+        _positive_decimal(average_price, "average_price", TradingRuleError)
+        _positive_decimal(quantity, "quantity", TradingRuleError)
+        if _round_to_step(quantity, self.quantity_step) != quantity:
+            raise TradingRuleError("quantity does not match quantity_step")
+        self._validate_values(average_price, quantity)
+
+    def normalize_common_base_quantity(
+        self,
+        other: "TradingRules",
+        requested: Decimal,
+    ) -> Decimal:
+        """Round a base quantity down to a step executable by both rules."""
+        if not isinstance(other, TradingRules):
+            raise TypeError("other must be TradingRules")
+        _positive_decimal(requested, "requested", TradingRuleError)
+        common_step = _decimal_lcm(
+            self.quantity_step * self.contract_multiplier,
+            other.quantity_step * other.contract_multiplier,
+        )
+        quantity = _round_to_step(requested, common_step)
+        if quantity <= 0:
+            raise TradingRuleError("quantity rounds down to zero")
+        return quantity
+
+    def _validate_values(self, price: Decimal, quantity: Decimal) -> None:
+        if quantity < self.minimum_quantity:
             raise TradingRuleError("quantity is below minimum_quantity")
         if (
             self.maximum_quantity is not None
-            and normalized_quantity > self.maximum_quantity
+            and quantity > self.maximum_quantity
         ):
             raise TradingRuleError("quantity exceeds maximum_quantity")
-        notional = (
-            normalized_price * normalized_quantity * self.contract_multiplier
-        )
+        notional = price * quantity * self.contract_multiplier
         if notional < self.minimum_notional:
             raise TradingRuleError("order notional is below minimum_notional")
-        return normalized_price, normalized_quantity
 
 
 @dataclass(frozen=True, slots=True)

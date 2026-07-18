@@ -346,6 +346,9 @@ binance-bitget-bot/
 │   │   ├── test_instrument_mappers.py
 │   │   ├── test_market_mappers.py
 │   │   └── test_websocket_clients.py
+│   ├── strategy/
+│   │   ├── __init__.py
+│   │   └── test_opportunity_engine.py
 │   ├── fault_injection/
 │   │   ├── .gitkeep
 │   │   ├── test_partial_fill.py

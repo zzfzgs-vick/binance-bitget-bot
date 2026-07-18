@@ -42,6 +42,31 @@ def _instrument(
 
 
 class InstrumentRulesTests(unittest.TestCase):
+    def test_common_base_quantity_is_quantized_by_trading_rules(self) -> None:
+        left = TradingRules(
+            tick_size=Decimal("0.01"),
+            quantity_step=Decimal("0.03"),
+            minimum_quantity=Decimal("0.03"),
+            maximum_quantity=Decimal("100"),
+            minimum_notional=Decimal("1"),
+            contract_multiplier=Decimal("1"),
+        )
+        right = TradingRules(
+            tick_size=Decimal("0.01"),
+            quantity_step=Decimal("2"),
+            minimum_quantity=Decimal("2"),
+            maximum_quantity=Decimal("10000"),
+            minimum_notional=Decimal("1"),
+            contract_multiplier=Decimal("0.01"),
+        )
+
+        quantity = left.normalize_common_base_quantity(
+            right,
+            Decimal("0.10"),
+        )
+
+        self.assertEqual(quantity, Decimal("0.06"))
+
     def test_normalize_order_uses_decimal_steps_and_rounds_quantity_down(self) -> None:
         rules = TradingRules(
             tick_size=Decimal("0.05"),

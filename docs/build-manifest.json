@@ -17,8 +17,9 @@
     "production_websocket_foundation": "PASS",
     "instrument_and_trading_rule_normalization": "PASS",
     "market_depth_and_funding_normalization": "PASS",
+    "arbitrage_fee_slippage_profit_calculation": "PASS",
     "python_syntax": "PASS",
-    "unittest": "PASS (119 tests)",
+    "unittest": "PASS (130 tests)",
     "module_start_and_close": "PASS"
   }
 }
