@@ -1,0 +1,1 @@
+"""Opportunity presenter placeholder."""

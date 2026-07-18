@@ -1,0 +1,1 @@
+"""Qt resource compilation placeholder."""

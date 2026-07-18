@@ -1,0 +1,6 @@
+/* Optional mode overlay. Not activated by this UI-only skeleton. */
+QPushButton#paperModeButton {
+    color: #ffdfdf;
+    border-color: #c83f49;
+    background-color: #321015;
+}

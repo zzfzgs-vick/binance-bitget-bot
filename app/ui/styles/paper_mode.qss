@@ -1,0 +1,6 @@
+/* Optional mode overlay. The base theme is dark.qss. */
+QPushButton#paperModeButton {
+    color: #56c7ff;
+    border-color: #128bc7;
+    background-color: #071827;
+}

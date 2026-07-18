@@ -1,0 +1,1 @@
+"""Paper database reset placeholder."""
