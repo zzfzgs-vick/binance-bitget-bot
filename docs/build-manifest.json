@@ -15,8 +15,9 @@
     "configuration_credentials_logging": "PASS",
     "production_rest_foundation": "PASS",
     "production_websocket_foundation": "PASS",
+    "instrument_and_trading_rule_normalization": "PASS",
     "python_syntax": "PASS",
-    "unittest": "PASS (91 tests)",
+    "unittest": "PASS (108 tests)",
     "module_start_and_close": "PASS"
   }
 }

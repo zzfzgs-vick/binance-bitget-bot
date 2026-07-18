@@ -1,6 +1,6 @@
 # Binance + Bitget Bot：UI 集成骨架
 
-这是一个 LIVE-only 桌面应用骨架，已完成 Qt Designer UI 关联、非敏感配置、日志、内存 API 凭据加载，以及 Binance、Bitget REST 与 WebSocket 基础适配；尚未实现交易功能。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
+这是一个 LIVE-only 桌面应用骨架，已完成 Qt Designer UI 关联、非敏感配置、日志、内存 API 凭据加载、Binance/Bitget REST 与 WebSocket 基础适配，以及交易标的与交易规则归一化；尚未实现交易功能。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
 
 ## 固定技术栈
 
@@ -28,6 +28,8 @@
 - Bitget REST 客户端支持生产环境公共/私有请求、HMAC 签名、服务器时间和原始产品信息。
 - Binance 与 Bitget WebSocket 客户端在后台线程的独立 `asyncio` 事件循环运行，支持公共订阅、取消订阅、心跳、有限重连和订阅恢复。
 - Bitget 私有入口支持登录消息签名；Binance 私有入口仅提供连接基础能力，不管理 listen key 生命周期。
+- Binance、Bitget 现货与 USDT 永续产品信息可归一化为统一的 `Instrument` 和 `TradingRules`；所有交易规则数值均为 `Decimal`。
+- 跨交易所匹配依据 base、quote、结算资产及市场语义，不依赖原始 symbol 拼写；价格与数量按官方步长集中向下量化。
 - 网络客户端均未接入 GUI；行情归一化、账户、下单、执行和持久化仍未实现。
 
 ## 配置与凭据

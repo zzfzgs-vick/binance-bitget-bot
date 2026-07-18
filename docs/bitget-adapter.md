@@ -9,3 +9,7 @@
   credentials on every connection. Authentication data is never logged.
 - Messages remain raw JSON plus parsed Python objects; no market, account, or order
   normalization is performed here.
+- UTA spot and USDT-futures instrument payloads are normalized into domain
+  instruments. Spot steps derive from official precisions; perpetual steps use
+  official multipliers validated against those precisions. Unknown status and
+  incomplete or conflicting rule data are errors.

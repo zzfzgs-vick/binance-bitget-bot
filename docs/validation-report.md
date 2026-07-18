@@ -8,7 +8,8 @@
 - Typed configuration, environment-only credentials, log rotation, idempotence, and redaction: PASS
 - Binance and Bitget production REST request, signing, timeout, and error contracts: PASS
 - Binance and Bitget production WebSocket subscription, authentication-message, heartbeat, reconnect, dispatch, redaction, and lifecycle contracts: PASS
-- Standard-library unittest suite: PASS (91 tests)
+- Binance and Bitget spot/USDT-perpetual product parsing, Decimal rules, cross-exchange matching, quantization, and invalid-data contracts: PASS
+- Standard-library unittest suite: PASS (108 tests)
 - `.\venv\Scripts\python.exe -m app.main` window creation and normal close: PASS
 
 No global Python or alternate virtual environment was used for validation.

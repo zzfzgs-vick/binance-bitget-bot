@@ -10,3 +10,6 @@
   this stage. Spot session authentication is also deferred.
 - Messages remain raw JSON plus parsed Python objects; no market, account, or order
   normalization is performed here.
+- Spot and USDⓈ-M exchange-information payloads are normalized into domain
+  instruments from official asset, status, price-filter, lot-size, and minimum-
+  notional fields. Missing, invalid, duplicate, or conflicting rules are errors.
