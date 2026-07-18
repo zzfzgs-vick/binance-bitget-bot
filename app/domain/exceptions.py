@@ -27,3 +27,7 @@ class AccountDataError(ValueError):
 
 class OrderDataError(ValueError):
     """Order data cannot form a valid normalized request or state."""
+
+
+class PositionDataError(ValueError):
+    """Execution data cannot form or update an arbitrage position."""

@@ -24,6 +24,7 @@ class MainWindowView(QObject):
     settings_requested = Signal()
     system_log_requested = Signal()
     live_environment_requested = Signal()
+    close_position_requested = Signal(str)
 
     def __init__(
         self,
@@ -62,6 +63,17 @@ class MainWindowView(QObject):
         self.widgets.settings_button.clicked.connect(self.settings_requested.emit)
         self.widgets.system_log_button.clicked.connect(self.system_log_requested.emit)
         self.widgets.live_mode_button.clicked.connect(self.live_environment_requested.emit)
+        self.widgets.position_table.doubleClicked.connect(
+            self._emit_close_position_request
+        )
+
+    def _emit_close_position_request(self, index) -> None:
+        model = self.widgets.position_table.model()
+        if model is None or not index.isValid() or index.column() != 12:
+            return
+        position_id = model.data(model.index(index.row(), 0))
+        if isinstance(position_id, str) and position_id:
+            self.close_position_requested.emit(position_id)
 
     def show(self) -> None:
         self.window.show()
@@ -83,6 +95,13 @@ class MainWindowView(QObject):
         self.widgets.system_ready_status_label.setText("●  UI 已加载")
         self.widgets.last_updated_status_label.setText("◷  最后更新时间 —")
         self.widgets.warning_status_label.setText("⚠  告警 —")
+        for label in (
+            self.widgets.binance_spot_balance_value_label,
+            self.widgets.binance_perp_balance_value_label,
+            self.widgets.bitget_spot_balance_value_label,
+            self.widgets.bitget_perp_balance_value_label,
+        ):
+            label.setText("—")
 
         for button in (
             self.widgets.live_mode_button,
@@ -132,3 +151,11 @@ class MainWindowView(QObject):
 
     def set_funding_history_model(self, model: QAbstractItemModel) -> None:
         self.widgets.funding_history_table.setModel(model)
+
+    def set_status(self, message: str, *, warning: bool = False) -> None:
+        if not isinstance(message, str) or not message.strip():
+            raise ValueError("status message must be a non-empty string")
+        self.widgets.system_ready_status_label.setText(f"●  {message}")
+        self.widgets.warning_status_label.setText(
+            f"⚠  {message}" if warning else "⚠  告警 —"
+        )

@@ -2,7 +2,7 @@
 
 ## Opportunity scan
 
-Owner: future `OpportunityPresenter` and `OpportunityTableModel`
+Owner: `OpportunityPresenter` and `OpportunityTableModel`
 
 - `symbolSearchLineEdit`
 - `scanAmountComboBox`
@@ -15,7 +15,7 @@ Owner: future `OpportunityPresenter` and `OpportunityTableModel`
 
 ## Dual-leg order entry
 
-Owner: future `OrderEntryPresenter`
+Owner: `OrderEntryPresenter`
 
 - `spotInvestmentDoubleSpinBox`
 - `spotMaxSlippageDoubleSpinBox`
@@ -31,11 +31,14 @@ Owner: future `OrderEntryPresenter`
 - `paperOrderButton`
 - `confirmDualLegButton`
 
-`paperOrderButton` is a legacy Qt Designer objectName. Python binds it as `live_order_button`; the control is disabled until a later LIVE order stage and does not provide simulated ordering.
+`paperOrderButton` is a legacy Qt Designer objectName. Python binds it as
+`live_order_button`; it prepares the selected LIVE opportunity, while
+`confirmDualLegButton` is the separate explicit order trigger. Neither control
+provides simulated ordering.
 
 ## Position and history area
 
-Owner: future `PositionPresenter`
+Owner: `PositionPresenter`
 
 - `positionTableView`
 - `executingOrdersTableView`
@@ -43,9 +46,12 @@ Owner: future `PositionPresenter`
 - `fundingHistoryTableView`
 - `positionTabWidget`
 
+The existing position table `操作` column emits the manual close request on a
+double-click. No new widget, layout change, or automatic close path is used.
+
 ## Global shell and connections
 
-Owner: `MainWindowPresenter`, future `ConnectionPresenter`, future `AccountPresenter`
+Owner: `MainWindowPresenter`, future `ConnectionPresenter`, `AccountPresenter`
 
 - `paperModeButton`
 - `refreshProductsButton`

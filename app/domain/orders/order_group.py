@@ -13,6 +13,8 @@ class DualLegStatus(str, Enum):
     FIRST_INCOMPLETE = "first_incomplete"
     SECOND_FAILED = "second_failed"
     SECOND_INCOMPLETE = "second_incomplete"
+    FIRST_UNKNOWN = "first_unknown"
+    SECOND_UNKNOWN = "second_unknown"
     QUANTITY_MISMATCH = "quantity_mismatch"
 
 

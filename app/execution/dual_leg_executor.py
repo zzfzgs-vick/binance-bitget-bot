@@ -32,9 +32,15 @@ class DualLegExecutor:
         second_request: OrderRequest,
     ) -> DualLegExecutionResult:
         try:
-            _compatible_legs(first_request, second_request)
-            first_request = prepare_order(first_request)
-            second_request = prepare_order(second_request)
+            first_request, second_request = prepare_dual_leg_requests(
+                first_request, second_request
+            )
+        except DualLegQuantityMismatchError as exc:
+            return DualLegExecutionResult(
+                DualLegStatus.QUANTITY_MISMATCH,
+                failed_leg(LegRole.FIRST, first_request, exc, submitted=False),
+                failed_leg(LegRole.SECOND, second_request, exc, submitted=False),
+            )
         except (OrderDataError, TradingRuleError) as exc:
             return DualLegExecutionResult(
                 DualLegStatus.PREFLIGHT_FAILED,
@@ -48,25 +54,6 @@ class DualLegExecutor:
                     LegRole.SECOND,
                     second_request,
                     exc,
-                    submitted=False,
-                ),
-            )
-        if _base_quantity(first_request) != _base_quantity(second_request):
-            error = OrderDataError(
-                "two legs have different normalized base quantities"
-            )
-            return DualLegExecutionResult(
-                DualLegStatus.QUANTITY_MISMATCH,
-                failed_leg(
-                    LegRole.FIRST,
-                    first_request,
-                    error,
-                    submitted=False,
-                ),
-                failed_leg(
-                    LegRole.SECOND,
-                    second_request,
-                    error,
                     submitted=False,
                 ),
             )
@@ -129,6 +116,25 @@ def _compatible_legs(first: OrderRequest, second: OrderRequest) -> None:
 
 def _base_quantity(request: OrderRequest) -> Decimal:
     return request.quantity * request.instrument.rules.contract_multiplier
+
+
+class DualLegQuantityMismatchError(OrderDataError):
+    """Normalized requests cannot execute the same base quantity."""
+
+
+def prepare_dual_leg_requests(
+    first: OrderRequest,
+    second: OrderRequest,
+) -> tuple[OrderRequest, OrderRequest]:
+    """Validate and normalize both legs before either can be submitted."""
+    _compatible_legs(first, second)
+    first = prepare_order(first)
+    second = prepare_order(second)
+    if _base_quantity(first) != _base_quantity(second):
+        raise DualLegQuantityMismatchError(
+            "two legs have different normalized base quantities"
+        )
+    return first, second
 
 
 _EXPECTED_FAILURES = (

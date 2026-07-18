@@ -33,11 +33,16 @@ class ApplicationConfigurationIntegrationTests(unittest.TestCase):
                 self.assertTrue(runtime.credentials.is_complete())
                 self.assertEqual(len(runtime.logger.handlers), 2)
                 self.assertTrue((log_directory / "application.log").is_file())
+                self.assertEqual(len(runtime.trading_clients), 4)
+                self.assertFalse(runtime.execution_worker.is_shutdown)
+                self.assertIsNotNone(runtime.live_events)
             finally:
+                runtime.shutdown()
                 runtime.shutdown()
                 app.processEvents()
 
             self.assertEqual(runtime.logger.handlers, [])
+            self.assertTrue(runtime.execution_worker.is_shutdown)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
-# Binance + Bitget Bot：UI 集成骨架
+# Binance + Bitget LIVE 套利桌面应用
 
-这是一个 LIVE-only 桌面应用骨架，已完成 Qt Designer UI 关联、非敏感配置、日志、内存 API 凭据加载、Binance/Bitget REST 与 WebSocket 基础适配、交易标的与交易规则归一化、实时行情、深度和资金费率处理，以及套利机会计算；尚未实现账户和交易执行功能。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
+这是一个 LIVE-only 桌面应用，已具备 Qt Designer UI 关联、配置与凭据、Binance/Bitget REST 和 WebSocket 适配、交易规则、实时行情、套利计算、账户同步、双腿订单执行、成交对账、套利仓位及手动双腿平仓能力。启动时只显示真实空状态，不自动连接、自动下单或生成虚假业务数据，也不提供模拟盘、测试网或 Demo Trading。
 
 ## 固定技术栈
 
@@ -33,7 +33,15 @@
 - Binance 与 Bitget 的现货/USDT 永续 ticker、最优买卖价、深度和永续资金费率可转换为统一 Decimal 事件。
 - 本地订单簿按官方更新序列处理快照和增量，支持零量删除、排序、限深、重复/乱序忽略以及缺口后重新同步。
 - 套利计算支持双交易所方向及现货/USDT 永续组合，按订单簿逐档计算成交均价、滑点、手续费、利润和 ROI。
-- 网络客户端均未接入 GUI；账户、下单、执行和持久化仍未实现。
+- 账户余额、账户持仓、套利机会和套利仓位通过现有 Presenter、Qt Signal 与只读表格模型接入 GUI。
+- 正式双腿开仓采用“准备 LIVE 下单 → 明确确认开仓”两步操作；不存在自动开仓路径。
+- 套利仓位只根据两腿实际成交创建，记录成交均价、数量、手续费、开仓时间、剩余数量和盈亏。
+- 手动平仓从实际剩余仓位生成反向订单，复用交易规则量化、幂等客户端订单号及 REST/WebSocket 对账。
+- 一条腿已关闭而另一条腿失败时，后续手动重试只提交仍有实际余量的交易腿。
+- 状态未知的开仓通过 GUI 查询原客户端订单号恢复，不会盲目重复创建订单。
+- Composition Root 通过 `LiveEventBridge` 接收标准化后台事件；因交易对、费率和策略阈值未确定，启动时不自动订阅或连接。
+- 阻塞式 REST 下单在专用后台线程池中执行，后台结果只通过 Qt Signal 返回 GUI。
+- Composition Root 创建四个正式生产交易适配器，但应用启动本身不连接网络或发送订单。
 
 ## 配置与凭据
 
@@ -77,7 +85,7 @@ py -3.14 -m venv venv
 2. `objectName` 是 UI 与源码的稳定契约；修改时同步更新 `MainWindowWidgets` 与测试。
 3. 布局、控件和静态文本放在 `.ui`；主题放在 `.qss`。
 4. View 不得直接访问 Binance、Bitget、行情、数据库或执行模块。
-5. Presenter 负责界面编排，但当前不实现交易功能。
+5. Presenter 只负责界面编排；交易执行通过后台 Worker 调用应用与执行模块。
 6. 领域层不得导入 PySide6、requests 或 websockets。
 7. HTTP 直接使用 `requests`；WebSocket 直接使用 `websockets`，不增加封装型网络依赖。
 8. `paperModeButton` 与 `paperOrderButton` 仅是遗留 objectName；界面与 Python 语义始终为 LIVE，不存在模式切换。

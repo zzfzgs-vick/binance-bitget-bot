@@ -98,6 +98,17 @@ class MainWindowWidgets:
     system_ready_status_label: QLabel
     last_updated_status_label: QLabel
     warning_status_label: QLabel
+    binance_spot_balance_value_label: QLabel
+    binance_perp_balance_value_label: QLabel
+    bitget_spot_balance_value_label: QLabel
+    bitget_perp_balance_value_label: QLabel
+    position_id_label: QLabel
+    position_spot_leg_label: QLabel
+    position_perpetual_leg_label: QLabel
+    position_leverage_label: QLabel
+    position_open_basis_label: QLabel
+    position_funding_paid_label: QLabel
+    position_net_pnl_label: QLabel
 
     @classmethod
     def bind(cls, window: QMainWindow) -> "MainWindowWidgets":
@@ -148,4 +159,25 @@ class MainWindowWidgets:
             system_ready_status_label=get(QLabel, "systemReadyStatusLabel"),
             last_updated_status_label=get(QLabel, "lastUpdatedStatusLabel"),
             warning_status_label=get(QLabel, "warningStatusLabel"),
+            binance_spot_balance_value_label=get(
+                QLabel, "binanceSpotBalanceValueLabel"
+            ),
+            binance_perp_balance_value_label=get(
+                QLabel, "binancePerpBalanceValueLabel"
+            ),
+            bitget_spot_balance_value_label=get(
+                QLabel, "bitgetSpotBalanceValueLabel"
+            ),
+            bitget_perp_balance_value_label=get(
+                QLabel, "bitgetPerpBalanceValueLabel"
+            ),
+            position_id_label=get(QLabel, "positionIdLabel"),
+            position_spot_leg_label=get(QLabel, "positionSpotLegLabel"),
+            position_perpetual_leg_label=get(
+                QLabel, "positionPerpetualLegLabel"
+            ),
+            position_leverage_label=get(QLabel, "positionLeverageLabel"),
+            position_open_basis_label=get(QLabel, "positionOpenBasisLabel"),
+            position_funding_paid_label=get(QLabel, "positionFundingPaidLabel"),
+            position_net_pnl_label=get(QLabel, "positionNetPnlLabel"),
         )

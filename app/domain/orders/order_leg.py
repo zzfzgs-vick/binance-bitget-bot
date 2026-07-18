@@ -17,6 +17,7 @@ class LegExecutionState(str, Enum):
     PARTIALLY_FILLED = "partially_filled"
     FILLED = "filled"
     FAILED = "failed"
+    UNKNOWN = "unknown"
 
 
 @dataclass(frozen=True, slots=True)
@@ -61,6 +62,20 @@ def failed_leg(
         role,
         request,
         states,
+        None,
+        str(error),
+    )
+
+
+def unknown_leg(
+    role: LegRole,
+    request: OrderRequest,
+    error: Exception,
+) -> OrderLegResult:
+    return OrderLegResult(
+        role,
+        request,
+        (LegExecutionState.SUBMITTED, LegExecutionState.UNKNOWN),
         None,
         str(error),
     )
