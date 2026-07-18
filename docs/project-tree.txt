@@ -333,6 +333,10 @@ binance-bitget-bot/
 │   ├── run_live.py
 │   └── validate_ui.py
 ├── tests/
+│   ├── exchanges/
+│   │   ├── __init__.py
+│   │   ├── test_binance_rest.py
+│   │   └── test_bitget_rest.py
 │   ├── fault_injection/
 │   │   ├── .gitkeep
 │   │   ├── test_partial_fill.py

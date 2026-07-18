@@ -1,6 +1,6 @@
 # Binance + Bitget Bot：UI 集成骨架
 
-这是一个 LIVE-only 桌面应用骨架，已完成 Qt Designer UI 关联、非敏感配置、日志和内存 API 凭据加载，尚未实现交易功能。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
+这是一个 LIVE-only 桌面应用骨架，已完成 Qt Designer UI 关联、非敏感配置、日志、内存 API 凭据加载，以及 Binance、Bitget 同步 REST 基础适配；尚未实现交易功能。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
 
 ## 固定技术栈
 
@@ -24,7 +24,9 @@
 - QSS 独立位于 `app/ui/styles/dark.qss`。
 - `config/live.toml` 只保存非敏感 LIVE 与日志设置，并支持环境变量覆盖。
 - API 凭据只从进程环境变量读取并保存在内存中，日志输出会脱敏。
-- Binance、Bitget、行情、执行和持久化目录仅保留架构占位，不含业务功能。
+- Binance 现货和 USDⓈ-M REST 客户端支持生产环境公共/私有请求、HMAC 签名、服务器时间和原始产品信息。
+- Bitget REST 客户端支持生产环境公共/私有请求、HMAC 签名、服务器时间和原始产品信息。
+- REST 客户端保持同步且未接入 GUI；行情、账户、下单、WebSocket、执行和持久化仍未实现。
 
 ## 配置与凭据
 

@@ -13,8 +13,9 @@
     "dependency_policy": "PASS",
     "external_import_policy": "PASS",
     "configuration_credentials_logging": "PASS",
+    "production_rest_foundation": "PASS",
     "python_syntax": "PASS",
-    "unittest": "PASS (38 tests)",
+    "unittest": "PASS (63 tests)",
     "module_start_and_close": "PASS"
   }
 }
