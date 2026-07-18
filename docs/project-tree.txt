@@ -151,6 +151,7 @@ binance-bitget-bot/
 │   ├── infrastructure/
 │   │   ├── config/
 │   │   │   ├── __init__.py
+│   │   │   ├── configuration.py
 │   │   │   └── paths.py
 │   │   ├── decimal/
 │   │   │   ├── __init__.py
@@ -341,14 +342,21 @@ binance-bitget-bot/
 │   │   ├── test_spot_leg_failure.py
 │   │   └── test_websocket_disconnect.py
 │   ├── integration/
+│   │   ├── __init__.py
 │   │   ├── binance/
 │   │   │   └── .gitkeep
 │   │   ├── bitget/
 │   │   │   └── .gitkeep
 │   │   ├── database/
 │   │   │   └── .gitkeep
-│   │   └── ui/
-│   │       └── .gitkeep
+│   │   ├── ui/
+│   │   │   └── .gitkeep
+│   │   └── test_application_configuration.py
+│   ├── infrastructure/
+│   │   ├── __init__.py
+│   │   ├── test_configuration.py
+│   │   ├── test_credentials.py
+│   │   └── test_logging.py
 │   ├── replay/
 │   │   ├── fixtures/
 │   │   │   └── .gitkeep

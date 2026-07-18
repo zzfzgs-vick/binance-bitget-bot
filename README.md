@@ -1,6 +1,6 @@
 # Binance + Bitget Bot：UI 集成骨架
 
-这是一个**仅完成 Qt Designer UI 与 Python 源码关联、不包含交易功能**的 LIVE-only 项目骨架。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
+这是一个 LIVE-only 桌面应用骨架，已完成 Qt Designer UI 关联、非敏感配置、日志和内存 API 凭据加载，尚未实现交易功能。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
 
 ## 固定技术栈
 
@@ -22,7 +22,32 @@
 - 主窗口控件已按“套利机会 / 双腿下单 / 当前仓位 / 顶部状态”划分归属。
 - 五个 `QTableView` 已绑定空只读模型及正式表头。
 - QSS 独立位于 `app/ui/styles/dark.qss`。
+- `config/live.toml` 只保存非敏感 LIVE 与日志设置，并支持环境变量覆盖。
+- API 凭据只从进程环境变量读取并保存在内存中，日志输出会脱敏。
 - Binance、Bitget、行情、执行和持久化目录仅保留架构占位，不含业务功能。
+
+## 配置与凭据
+
+日志配置项为 `level`、`third_party_level`、`directory`、`file_name`、`max_bytes` 和 `backup_count`。对应环境变量覆盖为：
+
+```text
+APP_LOG_LEVEL
+APP_THIRD_PARTY_LOG_LEVEL
+APP_LOG_DIRECTORY
+APP_LOG_FILE
+APP_LOG_MAX_BYTES
+APP_LOG_BACKUP_COUNT
+```
+
+API 凭据只读取以下环境变量，不得写入 TOML：
+
+```text
+BINANCE_API_KEY
+BINANCE_API_SECRET
+BITGET_API_KEY
+BITGET_API_SECRET
+BITGET_API_PASSPHRASE
+```
 
 ## 创建环境并启动
 

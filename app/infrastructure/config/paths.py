@@ -24,3 +24,8 @@ def ui_form_path(filename: str) -> Path:
 def ui_style_path(filename: str) -> Path:
     """Return an absolute path to one QSS file."""
     return package_root() / "ui" / "styles" / filename
+
+
+def live_config_path() -> Path:
+    """Return the fixed LIVE configuration file path."""
+    return package_root().parent / "config" / "live.toml"

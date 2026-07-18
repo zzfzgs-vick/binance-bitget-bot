@@ -5,7 +5,8 @@
 - UI XML, root widget, required object names, structural contract, and empty-state contract: PASS
 - Runtime Qt loading in offscreen mode: PASS
 - Dependency policy, source import boundaries, UI/source contract, and Python syntax: PASS
-- Standard-library unittest suite: PASS (21 tests)
+- Typed configuration, environment-only credentials, log rotation, idempotence, and redaction: PASS
+- Standard-library unittest suite: PASS (38 tests)
 - `.\venv\Scripts\python.exe -m app.main` window creation and normal close: PASS
 
 No global Python or alternate virtual environment was used for validation.

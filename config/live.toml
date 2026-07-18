@@ -1,2 +1,10 @@
 [application]
 mode = "live"
+
+[logging]
+level = "INFO"
+third_party_level = "WARNING"
+directory = "logs"
+file_name = "application.log"
+max_bytes = 5000000
+backup_count = 3

@@ -3,7 +3,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import logging
 
+from app.infrastructure.config.configuration import AppConfig
+from app.infrastructure.logging.logging_config import shutdown_logging
+from app.infrastructure.security.credential_store import ApiCredentials
 from app.ui.presenters.main_window_presenter import MainWindowPresenter
 from app.ui.views.main_window import MainWindowView
 
@@ -14,6 +18,9 @@ class ApplicationRuntime:
 
     main_window: MainWindowView
     main_window_presenter: MainWindowPresenter
+    configuration: AppConfig
+    credentials: ApiCredentials
+    logger: logging.Logger
     _is_shutdown: bool = field(default=False, init=False, repr=False)
 
     def shutdown(self) -> None:
@@ -21,4 +28,7 @@ class ApplicationRuntime:
         if self._is_shutdown:
             return
         self._is_shutdown = True
-        self.main_window.dispose()
+        try:
+            self.main_window.dispose()
+        finally:
+            shutdown_logging(self.logger)

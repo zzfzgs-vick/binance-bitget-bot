@@ -12,8 +12,9 @@
     "runtime_qt_loading": "PASS",
     "dependency_policy": "PASS",
     "external_import_policy": "PASS",
+    "configuration_credentials_logging": "PASS",
     "python_syntax": "PASS",
-    "unittest": "PASS (21 tests)",
+    "unittest": "PASS (38 tests)",
     "module_start_and_close": "PASS"
   }
 }

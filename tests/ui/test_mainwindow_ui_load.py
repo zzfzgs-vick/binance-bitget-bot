@@ -1,4 +1,5 @@
 import os
+import logging
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
@@ -75,6 +76,9 @@ class MainWindowRuntimeTests(unittest.TestCase):
         runtime = ApplicationRuntime(
             main_window=view,
             main_window_presenter=Mock(),
+            configuration=Mock(),
+            credentials=Mock(),
+            logger=logging.getLogger("tests.runtime.shutdown"),
         )
 
         runtime.shutdown()
