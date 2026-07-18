@@ -19,3 +19,7 @@ class MarketDataError(ValueError):
 
 class ArbitrageCalculationError(ValueError):
     """An arbitrage opportunity cannot be calculated from the inputs."""
+
+
+class AccountDataError(ValueError):
+    """Account data cannot form a valid normalized state event."""
