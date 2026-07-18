@@ -19,8 +19,8 @@ Persistence  Python sqlite3 (future)
 
 The current implementation includes UI loading and association, configuration,
 logging, environment-only credentials, synchronous REST foundations, threaded
-WebSocket foundations, and exchange product normalization. Each WebSocket client
-owns one background thread and one asyncio event loop; it does not touch Qt
-objects. Exchange mappers translate raw product payloads into domain `Instrument`
-and `TradingRules` values; the domain owns matching and Decimal quantization and
-does not depend on Qt or networking libraries.
+WebSocket foundations, exchange product normalization, and market-event processing.
+Each WebSocket client owns one background thread and one asyncio event loop; it
+does not touch Qt objects. Exchange mappers translate raw product and market
+payloads into domain values. The domain owns matching, Decimal quantization, and
+sequence-aware order-book state and does not depend on Qt or networking libraries.

@@ -11,3 +11,7 @@ class InstrumentMatchError(ValueError):
 
 class TradingRuleError(ValueError):
     """An order value violates normalized trading rules."""
+
+
+class MarketDataError(ValueError):
+    """A market message or normalized event is invalid."""

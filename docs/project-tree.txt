@@ -337,12 +337,14 @@ binance-bitget-bot/
 ├── tests/
 │   ├── domain/
 │   │   ├── __init__.py
+│   │   ├── test_market_data.py
 │   │   └── test_instruments.py
 │   ├── exchanges/
 │   │   ├── __init__.py
 │   │   ├── test_binance_rest.py
 │   │   ├── test_bitget_rest.py
 │   │   ├── test_instrument_mappers.py
+│   │   ├── test_market_mappers.py
 │   │   └── test_websocket_clients.py
 │   ├── fault_injection/
 │   │   ├── .gitkeep
