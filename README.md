@@ -1,6 +1,6 @@
 # Binance + Bitget Bot：UI 集成骨架
 
-这是一个 LIVE-only 桌面应用骨架，已完成 Qt Designer UI 关联、非敏感配置、日志、内存 API 凭据加载，以及 Binance、Bitget 同步 REST 基础适配；尚未实现交易功能。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
+这是一个 LIVE-only 桌面应用骨架，已完成 Qt Designer UI 关联、非敏感配置、日志、内存 API 凭据加载，以及 Binance、Bitget REST 与 WebSocket 基础适配；尚未实现交易功能。启动时只显示真实空状态，不提供模拟盘、测试网或 Demo Trading。
 
 ## 固定技术栈
 
@@ -26,7 +26,9 @@
 - API 凭据只从进程环境变量读取并保存在内存中，日志输出会脱敏。
 - Binance 现货和 USDⓈ-M REST 客户端支持生产环境公共/私有请求、HMAC 签名、服务器时间和原始产品信息。
 - Bitget REST 客户端支持生产环境公共/私有请求、HMAC 签名、服务器时间和原始产品信息。
-- REST 客户端保持同步且未接入 GUI；行情、账户、下单、WebSocket、执行和持久化仍未实现。
+- Binance 与 Bitget WebSocket 客户端在后台线程的独立 `asyncio` 事件循环运行，支持公共订阅、取消订阅、心跳、有限重连和订阅恢复。
+- Bitget 私有入口支持登录消息签名；Binance 私有入口仅提供连接基础能力，不管理 listen key 生命周期。
+- 网络客户端均未接入 GUI；行情归一化、账户、下单、执行和持久化仍未实现。
 
 ## 配置与凭据
 
@@ -72,5 +74,5 @@ py -3.14 -m venv venv
 4. View 不得直接访问 Binance、Bitget、行情、数据库或执行模块。
 5. Presenter 负责界面编排，但当前不实现交易功能。
 6. 领域层不得导入 PySide6、requests 或 websockets。
-7. 后续 HTTP 直接使用 `requests`；WebSocket 直接使用 `websockets`，不增加封装型网络依赖。
+7. HTTP 直接使用 `requests`；WebSocket 直接使用 `websockets`，不增加封装型网络依赖。
 8. `paperModeButton` 与 `paperOrderButton` 仅是遗留 objectName；界面与 Python 语义始终为 LIVE，不存在模式切换。

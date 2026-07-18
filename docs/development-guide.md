@@ -10,4 +10,5 @@
 8. 使用 `.\venv\Scripts\python.exe -m app.main` 启动应用。
 9. 保持业务逻辑在 `app/ui/views` 之外。
 10. `app/domain` 不得导入 PySide6、requests 或 websockets。
-11. 后续 REST 直接使用 requests；WebSocket 直接使用 websockets。
+11. REST 直接使用 requests；WebSocket 直接使用 websockets。
+12. 阻塞 REST 不得在 Qt GUI 主线程运行；WebSocket 客户端必须在后台线程的独立 asyncio 事件循环运行。

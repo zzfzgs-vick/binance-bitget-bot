@@ -17,5 +17,8 @@ WebSocket    websockets 16.1
 Persistence  Python sqlite3 (future)
 ```
 
-The current archive implements only UI loading, widget binding, empty table models,
-and Presenter association. Trading-related modules remain placeholders.
+The current implementation includes UI loading and association, configuration,
+logging, environment-only credentials, synchronous REST foundations, and threaded
+WebSocket foundations. Each WebSocket client owns one background thread and one
+asyncio event loop; it does not touch Qt objects. Trading-related application and
+domain modules remain placeholders.

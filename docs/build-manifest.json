@@ -14,8 +14,9 @@
     "external_import_policy": "PASS",
     "configuration_credentials_logging": "PASS",
     "production_rest_foundation": "PASS",
+    "production_websocket_foundation": "PASS",
     "python_syntax": "PASS",
-    "unittest": "PASS (63 tests)",
+    "unittest": "PASS (91 tests)",
     "module_start_and_close": "PASS"
   }
 }

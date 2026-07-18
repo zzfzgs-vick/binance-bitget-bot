@@ -101,6 +101,7 @@ binance-bitget-bot/
 │   │   │   │   └── spot_trading_client.py
 │   │   │   ├── websocket/
 │   │   │   │   ├── __init__.py
+│   │   │   │   ├── client.py
 │   │   │   │   ├── futures_private_ws.py
 │   │   │   │   ├── futures_public_ws.py
 │   │   │   │   ├── spot_private_ws.py
@@ -127,6 +128,7 @@ binance-bitget-bot/
 │   │   │   │   └── spot_trading_client.py
 │   │   │   ├── websocket/
 │   │   │   │   ├── __init__.py
+│   │   │   │   ├── client.py
 │   │   │   │   ├── futures_private_ws.py
 │   │   │   │   ├── futures_public_ws.py
 │   │   │   │   ├── spot_private_ws.py
@@ -336,7 +338,8 @@ binance-bitget-bot/
 │   ├── exchanges/
 │   │   ├── __init__.py
 │   │   ├── test_binance_rest.py
-│   │   └── test_bitget_rest.py
+│   │   ├── test_bitget_rest.py
+│   │   └── test_websocket_clients.py
 │   ├── fault_injection/
 │   │   ├── .gitkeep
 │   │   ├── test_partial_fill.py

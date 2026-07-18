@@ -1,4 +1,4 @@
-"""Fixed Binance production REST endpoints used in this stage."""
+"""Fixed Binance production REST and WebSocket endpoints."""
 
 BINANCE_SPOT_BASE_URL = "https://api.binance.com"
 BINANCE_FUTURES_BASE_URL = "https://fapi.binance.com"
@@ -7,3 +7,9 @@ BINANCE_SPOT_TIME_PATH = "/api/v3/time"
 BINANCE_SPOT_EXCHANGE_INFO_PATH = "/api/v3/exchangeInfo"
 BINANCE_FUTURES_TIME_PATH = "/fapi/v1/time"
 BINANCE_FUTURES_EXCHANGE_INFO_PATH = "/fapi/v1/exchangeInfo"
+
+BINANCE_SPOT_PUBLIC_WS_URL = "wss://stream.binance.com:9443/stream"
+BINANCE_SPOT_PRIVATE_WS_URL = "wss://ws-api.binance.com:443/ws-api/v3"
+BINANCE_FUTURES_PUBLIC_WS_URL = "wss://fstream.binance.com/public/stream"
+BINANCE_FUTURES_MARKET_WS_URL = "wss://fstream.binance.com/market/stream"
+BINANCE_FUTURES_PRIVATE_WS_BASE_URL = "wss://fstream.binance.com/private/ws"

@@ -23,3 +23,8 @@ def sign_prehash(prehash: str, secret: str) -> str:
         hashlib.sha256,
     ).digest()
     return base64.b64encode(digest).decode("ascii")
+
+
+def sign_websocket_login(timestamp: str, secret: str) -> str:
+    """Sign the Bitget WebSocket verification prehash."""
+    return sign_prehash(f"{timestamp}GET/user/verify", secret)
