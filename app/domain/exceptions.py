@@ -23,3 +23,7 @@ class ArbitrageCalculationError(ValueError):
 
 class AccountDataError(ValueError):
     """Account data cannot form a valid normalized state event."""
+
+
+class OrderDataError(ValueError):
+    """Order data cannot form a valid normalized request or state."""
