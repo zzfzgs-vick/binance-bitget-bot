@@ -1,6 +1,8 @@
 import os
 import logging
 from pathlib import Path
+import subprocess
+import sys
 from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import Mock, patch
@@ -16,6 +18,25 @@ except ModuleNotFoundError:
 
 @unittest.skipUnless(QApplication is not None, "PySide6 is not installed")
 class MainWindowRuntimeTests(unittest.TestCase):
+    def test_main_module_can_be_loaded_from_its_script_path(self) -> None:
+        repository_root = Path(__file__).resolve().parents[2]
+        script = repository_root / "app" / "main.py"
+        probe = (
+            "import runpy, sys; "
+            f"sys.path.insert(0, {str(script.parent)!r}); "
+            f"runpy.run_path({str(script)!r}, run_name='entrypoint_probe')"
+        )
+
+        result = subprocess.run(
+            [sys.executable, "-c", probe],
+            cwd=repository_root / "tests",
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+
+        self.assertEqual(0, result.returncode, result.stderr)
+
     def test_mainwindow_runtime_load(self) -> None:
         from app.ui.loader.ui_loader import load_typed_ui
         from app.ui.loader.widget_registry import MainWindowWidgets

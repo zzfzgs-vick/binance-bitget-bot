@@ -2,7 +2,13 @@
 
 from __future__ import annotations
 
+from pathlib import Path
 import sys
+
+if not __package__:
+    repository_root = str(Path(__file__).resolve().parent.parent)
+    if repository_root not in sys.path:
+        sys.path.insert(0, repository_root)
 
 from PySide6.QtWidgets import QApplication
 
