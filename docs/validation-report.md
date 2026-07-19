@@ -11,7 +11,8 @@
 - Binance and Bitget spot/USDT-perpetual product parsing, Decimal rules, cross-exchange matching, quantization, and invalid-data contracts: PASS
 - Binance and Bitget spot/USDT-perpetual best quotes, depth snapshots and updates, funding rates, Decimal precision, and sequence-gap recovery: PASS
 - Bidirectional spot/perpetual depth fills, common-quantity normalization, fees, slippage, gross/net profit, ROI, stale data, and insufficient depth: PASS
-- Standard-library unittest suite: PASS (130 tests)
-- `.\venv\Scripts\python.exe -m app.main` window creation and normal close: PASS
+- Standard-library unittest suite: PASS (245 tests)
+- `scripts/validate_ui.py`, `scripts/check_project.py`, and `git diff --check`: PASS
+- No live application startup was run during this audit because it would connect to production data sources.
 
 No global Python or alternate virtual environment was used for validation.

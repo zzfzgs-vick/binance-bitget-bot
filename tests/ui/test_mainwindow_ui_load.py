@@ -86,6 +86,61 @@ class MainWindowRuntimeTests(unittest.TestCase):
 
         view.dispose.assert_called_once_with()
 
+    def test_runtime_start_owns_recovery_and_live_data_start_once(self) -> None:
+        from app.container import ApplicationRuntime
+
+        view = Mock()
+        presenter = Mock()
+        credentials = Mock()
+        credentials.is_complete.return_value = True
+        execution = Mock()
+        live_data = Mock()
+        runtime = ApplicationRuntime(
+            main_window=view,
+            main_window_presenter=presenter,
+            configuration=Mock(),
+            credentials=credentials,
+            logger=logging.getLogger("tests.runtime.start"),
+            execution_worker=execution,
+            live_data_worker=live_data,
+        )
+
+        runtime.start()
+        runtime.start()
+
+        view.set_live_capabilities.assert_called_once_with(accounts_available=True)
+        execution.recover_pending.assert_called_once_with()
+        live_data.start.assert_called_once_with()
+        runtime.shutdown()
+
+    def test_runtime_shutdown_releases_every_resource_after_one_stop_fails(self) -> None:
+        from app.container import ApplicationRuntime
+
+        view = Mock()
+        presenter = Mock()
+        live_data = Mock()
+        live_data.shutdown.side_effect = RuntimeError("stream stop failed")
+        bridge = Mock()
+        client = Mock()
+        runtime = ApplicationRuntime(
+            main_window=view,
+            main_window_presenter=presenter,
+            configuration=Mock(),
+            credentials=Mock(),
+            logger=logging.getLogger("tests.runtime.failed-shutdown"),
+            live_data_worker=live_data,
+            live_events=bridge,
+            closeable_clients=(client,),
+        )
+
+        with self.assertRaisesRegex(RuntimeError, "stream stop failed"):
+            runtime.shutdown()
+
+        bridge.disconnect_all.assert_called_once_with()
+        presenter.shutdown.assert_called_once_with()
+        client.close.assert_called_once_with()
+        view.dispose.assert_called_once_with()
+
     def test_python_ui_interface_uses_live_not_paper_semantics(self) -> None:
         from app.ui.views.main_window import MainWindowView
 

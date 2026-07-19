@@ -47,6 +47,8 @@ class AccountRestClientTests(unittest.TestCase):
             bitget_api_passphrase="passphrase",
         )
         client = BitgetAccountClient(credentials=credentials, session=session, clock_ms=lambda: 1)
+        client.get_settings()
+        self.assertEqual(session.request.call_args.args[1], "https://api.bitget.com/api/v3/account/settings")
         client.get_account()
         self.assertEqual(session.request.call_args.args[1], "https://api.bitget.com/api/v3/account/assets")
         client.get_positions()

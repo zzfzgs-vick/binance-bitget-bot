@@ -22,6 +22,7 @@ from app.exchanges.binance.rest.futures_market_client import (
     BinanceFuturesMarketClient,
 )
 from app.exchanges.binance.rest.spot_market_client import BinanceSpotMarketClient
+from app.exchanges.binance.rest.futures_trading_client import BinanceFuturesTradingClient
 from app.exchanges.binance.signer import sign_query
 from app.infrastructure.security.credential_store import ApiCredentials
 
@@ -41,6 +42,29 @@ class _InvalidJsonResponse(_Response):
 
 
 class BinanceRestTests(unittest.TestCase):
+    def test_futures_listen_key_create_keepalive_and_close_are_api_key_only(self) -> None:
+        self.session.request.side_effect = [
+            _Response({"listenKey": "live-listen-key"}),
+            _Response({}),
+            _Response({}),
+        ]
+        client = BinanceFuturesTradingClient(
+            credentials=self.credentials, session=self.session
+        )
+
+        self.assertEqual(client.create_listen_key(), "live-listen-key")
+        client.keepalive_listen_key()
+        client.close_listen_key()
+
+        self.assertEqual(
+            [call.args[0] for call in self.session.request.call_args_list],
+            ["POST", "PUT", "DELETE"],
+        )
+        for call in self.session.request.call_args_list:
+            self.assertEqual(call.args[1], "https://fapi.binance.com/fapi/v1/listenKey")
+            self.assertEqual(call.kwargs["headers"], {"X-MBX-APIKEY": "test-key"})
+            self.assertIsNone(call.kwargs["params"])
+
     def setUp(self) -> None:
         self.credentials = ApiCredentials(
             binance_api_key="test-key",

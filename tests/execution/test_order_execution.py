@@ -5,6 +5,8 @@ from decimal import Decimal
 import unittest
 from unittest.mock import Mock
 import threading
+from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from app.domain.enums import Exchange, MarketType, TradingStatus
 from app.domain.exceptions import OrderDataError
@@ -106,6 +108,44 @@ def _order(
 
 
 class IdempotentSubmissionTests(unittest.TestCase):
+    def test_operation_recovery_context_survives_restart(self) -> None:
+        first = _request(Exchange.BINANCE, OrderSide.BUY, "context-first")
+        second = _request(Exchange.BITGET, OrderSide.SELL, "context-second")
+        with TemporaryDirectory() as directory:
+            journal = Path(directory) / "orders.json"
+            service = IdempotentOrderService(journal_path=journal)
+            service.register_context("position-1", "open", (first, second))
+
+            restarted = IdempotentOrderService(journal_path=journal)
+
+            (context,) = restarted.recovery_contexts
+            self.assertEqual(context.operation_id, "position-1")
+            self.assertEqual(context.kind, "open")
+            self.assertEqual(context.requests, (first, second))
+
+    def test_restart_queries_persisted_client_id_before_any_create(self) -> None:
+        request = _request(Exchange.BINANCE, OrderSide.BUY, "restart-original")
+        with TemporaryDirectory() as directory:
+            journal = Path(directory) / "orders.json"
+            first_client = Mock()
+            first_client.create_order.side_effect = ExchangeTimeoutError("timeout")
+            first_client.query_order.side_effect = ExchangeResponseError("offline")
+            first = IdempotentOrderService(journal_path=journal)
+            with self.assertRaises(OrderStateUnknownError):
+                first.submit(first_client, request)
+
+            second_client = Mock()
+            second_client.query_order.return_value = _order(
+                request, OrderStatus.FILLED, cumulative="0.010"
+            )
+            restarted = IdempotentOrderService(journal_path=journal)
+            recovered = restarted.submit(second_client, request)
+
+            self.assertEqual(recovered.status, OrderStatus.FILLED)
+            second_client.create_order.assert_not_called()
+            second_client.query_order.assert_called_once_with(request)
+            self.assertEqual(restarted.pending_requests, ())
+
     def test_client_order_id_factory_is_short_and_unique_per_leg(self) -> None:
         factory = ClientOrderIdFactory(clock_ms=lambda: 1784462400000)
         first = factory.create("a")

@@ -1,1 +1,0 @@
-"""Market replay test placeholder."""

@@ -19,6 +19,7 @@ from app.exchanges.binance.mappers.account_mapper import (
 from app.exchanges.bitget.mappers.account_mapper import (
     private_subscriptions,
     parse_account,
+    parse_account_settings,
     parse_positions,
     parse_private_message as parse_bitget_private,
 )
@@ -205,6 +206,18 @@ class BinanceAccountMapperTests(unittest.TestCase):
 
 
 class BitgetAccountMapperTests(unittest.TestCase):
+    def test_account_settings_define_position_mode_even_when_flat(self) -> None:
+        self.assertIs(
+            parse_account_settings(
+                {"code": "00000", "data": {"holdMode": "one_way_mode"}}
+            ),
+            PositionMode.ONE_WAY,
+        )
+        with self.assertRaisesRegex(AccountDataError, "unknown holding mode"):
+            parse_account_settings(
+                {"code": "00000", "data": {"holdMode": "unknown"}}
+            )
+
     def test_uta_rest_account_and_positions_are_normalized(self) -> None:
         instrument = _instrument(Exchange.BITGET)
         account = parse_account(

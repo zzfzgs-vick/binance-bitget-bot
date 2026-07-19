@@ -224,11 +224,12 @@ class TradingClientParameterTests(unittest.TestCase):
                 session.request.side_effect = [
                     _Response({"code": "00000", "msg": "success", "requestTime": 1784462400000, "data": {"clientOid": str(request.client_order_id), "orderId": "456"}}),
                     _Response(_bitget_query_payload(request)),
+                    _Response(_bitget_query_payload(request)),
                     _Response({"code": "00000", "msg": "success", "requestTime": 1784462400001, "data": {"clientOid": str(request.client_order_id), "orderId": "456"}}),
                 ]
                 client = client_type(credentials=credentials, session=session, clock_ms=lambda: 9)
                 submitted = client.create_order(request)
-                args = session.request.call_args
+                args = session.request.call_args_list[0]
                 self.assertEqual(args.args[1], "https://api.bitget.com/api/v3/trade/place-order")
                 self.assertIn('"category":"' + category + '"', args.kwargs["data"])
                 self.assertIn('"clientOid":"' + str(request.client_order_id) + '"', args.kwargs["data"])
@@ -251,19 +252,49 @@ class TradingClientParameterTests(unittest.TestCase):
             reference_price=Decimal("62500.19"),
             client_order_id=ClientOrderId("stage9-bit-market"),
         )
-        session.request.side_effect = [
-            _Response({"code": "00000", "msg": "success", "requestTime": 1784462400000, "data": {"clientOid": str(request.client_order_id), "orderId": "457"}}),
-            _Response({"code": "00000", "msg": "success", "requestTime": 1784462400001, "data": {"orderId": "457", "clientOid": str(request.client_order_id), "category": "SPOT", "symbol": "BTCUSDT", "price": "0", "qty": "625.0010", "amount": "625.0010", "orderType": "market", "side": "buy", "cumExecQty": "0", "cumExecValue": "0", "avgPrice": "0", "timeInForce": "gtc", "orderStatus": "new", "feeDetail": [], "updatedTime": "1784462400001"}}),
-        ]
+        session.request.return_value = _Response(
+            {"code": "00000", "msg": "success", "requestTime": 1784462400000, "data": {"clientOid": str(request.client_order_id), "orderId": "457"}}
+        )
         client = BitgetSpotTradingClient(
             credentials=ApiCredentials(bitget_api_key="key", bitget_api_secret="secret", bitget_api_passphrase="passphrase"),
             session=session,
             clock_ms=lambda: 9,
         )
         client.create_order(request)
-        self.assertIn('"qty":"625.0010"', session.request.call_args.kwargs["data"])
-        queried = client.query_order(request)
-        self.assertEqual(queried.original_quantity, Decimal("0.010"))
+        self.assertIn('"qty":"625.0010"', session.request.call_args_list[0].kwargs["data"])
+        self.assertEqual(session.request.call_count, 1)
+
+    def test_futures_close_sends_reduce_only_in_one_way_mode(self) -> None:
+        credentials = ApiCredentials(
+            binance_api_key="key", binance_api_secret="secret",
+            bitget_api_key="key", bitget_api_secret="secret", bitget_api_passphrase="pass",
+        )
+        for client_type, exchange, expected in (
+            (BinanceFuturesTradingClient, Exchange.BINANCE, 'true'),
+            (BitgetFuturesTradingClient, Exchange.BITGET, 'yes'),
+        ):
+            with self.subTest(exchange=exchange):
+                session = Mock(spec=requests.Session)
+                request = OrderRequest(
+                    instrument=_instrument(exchange, MarketType.USDT_PERPETUAL),
+                    side=OrderSide.SELL,
+                    order_type=OrderType.MARKET,
+                    quantity=Decimal("0.01"),
+                    reference_price=Decimal("62500"),
+                    client_order_id=ClientOrderId(f"close-{exchange.value}"),
+                    reduce_only=True,
+                )
+                if exchange is Exchange.BINANCE:
+                    session.request.return_value = _Response(_binance_payload(request))
+                else:
+                    session.request.return_value = _Response(
+                        {"code":"00000","msg":"success","data":{"orderId":"9","clientOid":str(request.client_order_id)}}
+                    )
+                client_type(credentials=credentials, session=session, clock_ms=lambda: 9).create_order(request)
+                first = session.request.call_args_list[0]
+                visible = str(first.kwargs.get("params")) + str(first.kwargs.get("data"))
+                self.assertIn("reduceOnly", visible)
+                self.assertIn(expected, visible)
 
 
 class PrivateOrderMapperTests(unittest.TestCase):

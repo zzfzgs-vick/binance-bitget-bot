@@ -13,11 +13,10 @@ must not replace them with another HTTP/WebSocket client or exchange SDK.
 REST clients are synchronous and must not run on the Qt GUI thread. WebSocket
 clients own a background thread and a private asyncio event loop. They provide
 JSON/raw-message dispatch, protocol or application heartbeat handling, bounded
-reconnection, and subscription restoration. They do not update Qt objects and are
-not connected to the GUI in this stage. Public-market subscriptions are built from
-normalized instruments and passed to the existing clients. Their message callbacks
-can emit normalized best-quote, depth-update, and funding-rate values without
-crossing into Qt.
+reconnection, and subscription restoration. They never update Qt objects directly.
+`ApplicationRuntime` starts the production data clients, and normalized events cross
+to GUI presenters only through Qt Signals. Public-market subscriptions are built
+from normalized instruments and passed to the existing clients.
 
 For the first Binance spot update, `lastUpdateId + 1` must fall within `[U, u]`;
 later updates continue across the same range fields. For Binance futures, the

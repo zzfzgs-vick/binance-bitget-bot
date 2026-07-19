@@ -47,7 +47,7 @@ class MainWindowStaticTests(unittest.TestCase):
             return node is not None and node.text == "true"
 
         self.assertEqual(text("paperModeButton"), "LIVE 正式实盘")
-        self.assertEqual(text("paperOrderButton"), "LIVE 下单（未接入）")
+        self.assertEqual(text("paperOrderButton"), "LIVE 正式下单")
 
         value_labels = [
             name for name in widgets

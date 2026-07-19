@@ -1902,10 +1902,10 @@
                <bool>false</bool>
               </property>
              <property name="text">
-               <string>LIVE 下单（未接入）</string>
+               <string>LIVE 正式下单</string>
               </property>
               <property name="toolTip">
-               <string>实盘下单将在后续阶段实现</string>
+               <string>选择可执行机会后启用正式双腿下单</string>
              </property>
             </widget>
            </item>

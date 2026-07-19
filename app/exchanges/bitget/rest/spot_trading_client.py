@@ -1,6 +1,7 @@
 """Synchronous Bitget UTA Spot order operations."""
 
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any
 
 from app.domain.enums import Exchange, MarketType
@@ -9,6 +10,7 @@ from app.domain.orders.fill import OrderFill
 from app.exchanges.bitget.constants import (
     BITGET_CANCEL_ORDER_PATH,
     BITGET_FILLS_PATH,
+    BITGET_FEE_RATE_PATH,
     BITGET_PLACE_ORDER_PATH,
     BITGET_QUERY_ORDER_PATH,
 )
@@ -23,6 +25,16 @@ from app.infrastructure.decimal.formatting import decimal_text
 
 
 class BitgetSpotTradingClient(BitgetRestClient):
+    def get_taker_fee_rate(self, symbol: str) -> Decimal:
+        payload = self.private_request(
+            "GET", BITGET_FEE_RATE_PATH,
+            params={"category": "SPOT", "symbol": symbol},
+        )
+        try:
+            return Decimal(payload["data"]["takerFeeRate"])
+        except (KeyError, TypeError, ValueError):
+            raise ValueError("Bitget Spot fee-rate response is invalid") from None
+
     def create_order(self, request: OrderRequest) -> Order:
         _request_market(request)
         request = prepare_order(request)

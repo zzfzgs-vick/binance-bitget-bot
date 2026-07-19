@@ -148,8 +148,8 @@ def static_validate() -> list[str]:
 
     if text("paperModeButton") != "LIVE 正式实盘":
         failures.append("legacy paperModeButton must display fixed LIVE semantics")
-    if text("paperOrderButton") != "LIVE 下单（未接入）":
-        failures.append("legacy paperOrderButton must display LIVE unavailable semantics")
+    if text("paperOrderButton") != "LIVE 正式下单":
+        failures.append("legacy paperOrderButton must display LIVE order semantics")
 
     for name, widget in widgets.items():
         if name.endswith("ValueLabel") and text(name) != "—":

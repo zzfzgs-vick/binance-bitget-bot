@@ -141,6 +141,25 @@ class LoggingConfigurationTests(unittest.TestCase):
                 for name, level in previous_levels.items():
                     logging.getLogger(name).setLevel(level)
 
+    def test_websocket_debug_frames_never_propagate(self) -> None:
+        from app.infrastructure.config.configuration import LoggingSettings
+        from app.infrastructure.logging.logging_config import configure_logging
+
+        with TemporaryDirectory() as temporary_directory:
+            logger = configure_logging(
+                LoggingSettings(
+                    directory=Path(temporary_directory),
+                    third_party_level="DEBUG",
+                ),
+                logger_name="tests.logging.websocket-frames",
+            )
+            try:
+                websocket_logger = logging.getLogger("websockets.client")
+                self.assertGreaterEqual(websocket_logger.getEffectiveLevel(), logging.WARNING)
+                self.assertFalse(logging.getLogger("websockets").propagate)
+            finally:
+                self._close_logger(logger)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -79,6 +79,7 @@ class OrderRequest:
     reference_price: Decimal | None = None
     time_in_force: TimeInForce = TimeInForce.GTC
     position_side: FuturesPositionSide | None = None
+    reduce_only: bool = False
 
     def __post_init__(self) -> None:
         if not isinstance(self.instrument, Instrument):
@@ -95,6 +96,8 @@ class OrderRequest:
             self.position_side, FuturesPositionSide
         ):
             raise TypeError("position_side must be FuturesPositionSide")
+        if not isinstance(self.reduce_only, bool):
+            raise TypeError("reduce_only must be bool")
         _positive(self.quantity, "quantity")
         if self.order_type is OrderType.LIMIT:
             if self.price is None:
@@ -109,6 +112,8 @@ class OrderRequest:
             and self.position_side is not None
         ):
             raise OrderDataError("position_side is only valid for futures orders")
+        if self.instrument.market_type is MarketType.SPOT and self.reduce_only:
+            raise OrderDataError("reduce_only is only valid for futures orders")
 
 
 @dataclass(frozen=True, slots=True)

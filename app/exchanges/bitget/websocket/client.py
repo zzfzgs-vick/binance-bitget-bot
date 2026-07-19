@@ -7,6 +7,7 @@ import asyncio
 import json
 import time
 from typing import Any
+import threading
 
 from app.exchanges.base.exchange_errors import ExchangeCredentialsError
 from app.exchanges.base.websockets_client import (
@@ -90,6 +91,43 @@ class BitgetPrivateWebSocketClient(BitgetWebSocketClient):
         super().__init__(url, **kwargs)
         self._credentials = credentials
         self._clock_seconds = clock_seconds or (lambda: int(time.time()))
+        self._subscriptions_ready = threading.Event()
+        self._pending_subscription_acks: set[str] = set()
+
+    @property
+    def is_connected(self) -> bool:
+        return super().is_connected and self._subscriptions_ready.is_set()
+
+    def _subscription_message(self, subscriptions: list[object]) -> str:
+        with self._subscriptions_lock:
+            self._pending_subscription_acks.update(
+                self._subscription_key(item) for item in subscriptions
+            )
+            self._subscriptions_ready.clear()
+        return super()._subscription_message(subscriptions)
+
+    def _deactivate_connection(self) -> None:
+        self._subscriptions_ready.clear()
+        with self._subscriptions_lock:
+            self._pending_subscription_acks.clear()
+        super()._deactivate_connection()
+
+    def _deliver_message(self, raw: str, parsed: object) -> None:
+        if isinstance(parsed, Mapping):
+            event = parsed.get("event")
+            code = parsed.get("code")
+            if event == "error" or (event == "subscribe" and code not in (None, 0, "0")):
+                raise WebSocketProtocolError("Bitget WebSocket subscription was rejected")
+            if event == "subscribe":
+                acknowledged = parsed.get("arg")
+                if acknowledged is not None:
+                    with self._subscriptions_lock:
+                        self._pending_subscription_acks.discard(
+                            self._subscription_key(self._normalize_subscription(acknowledged))
+                        )
+                        if not self._pending_subscription_acks:
+                            self._subscriptions_ready.set()
+        super()._deliver_message(raw, parsed)
 
     def _connection_messages(self) -> tuple[str, ...]:
         message = build_login_message(

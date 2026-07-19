@@ -34,14 +34,14 @@ class BinanceWebSocketClient(ThreadedWebSocketClient):
 
 
 class BinancePrivateWebSocketClient(BinanceWebSocketClient):
-    """Connection-only private entry until its session protocol is implemented."""
+    """Private streams are server-selected and reject market subscriptions."""
 
     def subscribe(self, *subscriptions: object) -> None:
         raise NotImplementedError(
-            "Binance private subscriptions belong to a later stage"
+            "Binance private streams do not accept market subscriptions"
         )
 
     def unsubscribe(self, *subscriptions: object) -> None:
         raise NotImplementedError(
-            "Binance private subscriptions belong to a later stage"
+            "Binance private streams do not accept market subscriptions"
         )

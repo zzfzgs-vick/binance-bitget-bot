@@ -1,10 +1,12 @@
 """Idempotent sequential close execution for an existing arbitrage position."""
 
 from dataclasses import dataclass, replace
+from collections.abc import Callable
 from decimal import Decimal
 from enum import Enum
 
 from app.domain.arbitrage.arbitrage_position import ArbitragePosition, PositionStatus
+from app.domain.enums import MarketType
 from app.domain.exceptions import OrderDataError, PositionDataError, TradingRuleError
 from app.domain.orders.fill import OrderFill
 from app.domain.orders.order import Order, OrderRequest, OrderSide, OrderStatus, OrderType
@@ -16,6 +18,7 @@ from app.execution.order_recovery_service import (
     DuplicateOrderSubmissionError,
     IdempotentOrderService,
     OrderStateUnknownError,
+    RecoveryContext,
 )
 from app.execution.preflight_validator import prepare_order
 
@@ -88,6 +91,8 @@ class PositionCloseExecutor:
         *,
         first_reference_price: Decimal,
         second_reference_price: Decimal,
+        before_submit: Callable[[tuple[object, ...]], None] | None = None,
+        defer_not_ready: bool = False,
     ) -> PositionCloseResult:
         known = self._results.get(position.position_id)
         if known is not None:
@@ -142,15 +147,123 @@ class PositionCloseExecutor:
             initial,
         )
         self._contexts[position.position_id] = context
-        return self._advance(context)
+        requests = tuple(
+            request for request in (first_request, second_request) if request is not None
+        )
+        if requests:
+            self._service.register_context(
+                position.position_id, "close", requests, position
+            )
+        return self._advance(context, before_submit, defer_not_ready)
 
-    def resume(self, position_id: str) -> PositionCloseResult:
+    def restore(
+        self,
+        recovery: RecoveryContext,
+        clients: dict,
+        before_submit: Callable[[tuple[object, ...]], None] | None = None,
+        defer_not_ready: bool = False,
+    ) -> PositionCloseResult:
+        if recovery.kind != "close" or recovery.position is None:
+            raise PositionDataError("invalid close recovery context")
+        known = self._results.get(recovery.operation_id)
+        if known is not None and known.status not in {
+            PositionCloseStatus.FIRST_PENDING,
+            PositionCloseStatus.SECOND_PENDING,
+            PositionCloseStatus.UNKNOWN,
+        }:
+            return known
+        active = self._contexts.get(recovery.operation_id)
+        if active is not None:
+            return self._advance(active, before_submit, defer_not_ready)
+        requests = recovery.requests
+        if not requests:
+            raise PositionDataError("close recovery context has no order request")
+        first_request = next(
+            (item for item in requests if item.instrument == recovery.position.first_leg.instrument),
+            None,
+        )
+        second_request = next(
+            (item for item in requests if item.instrument == recovery.position.second_leg.instrument),
+            None,
+        )
+        first_instrument = recovery.position.first_leg.instrument
+        second_instrument = recovery.position.second_leg.instrument
+        context = _CloseContext(
+            recovery.position,
+            clients[(first_instrument.exchange, first_instrument.market_type)],
+            clients[(second_instrument.exchange, second_instrument.market_type)],
+            first_request,
+            second_request,
+            OrderReconciler(),
+            PositionCloseResult(
+                PositionCloseStatus.FIRST_PENDING,
+                recovery.position,
+                first_request,
+                second_request,
+            ),
+            None if first_request is None else self._service.known_order(first_request),
+            None if second_request is None else self._service.known_order(second_request),
+        )
+        for order in (context.first_order, context.second_order):
+            if order is not None:
+                context.reconciler.apply(order)
+        self._contexts[recovery.operation_id] = context
+        return self._advance(context, before_submit, defer_not_ready)
+
+    def resume(
+        self,
+        position_id: str,
+        before_submit: Callable[[tuple[object, ...]], None] | None = None,
+        defer_not_ready: bool = False,
+    ) -> PositionCloseResult:
         """Query an uncertain original order and continue; never create a replacement."""
         try:
             context = self._contexts[position_id]
         except KeyError:
             raise PositionDataError(f"unknown close operation {position_id!r}") from None
-        return self._advance(context)
+        confirm_deferred = self._service.confirmation_required(position_id)
+        if (
+            context.first_request is not None
+            and context.first_order is not None
+            and not context.first_order.is_terminal
+        ):
+            context.first_order = self._service.refresh(
+                context.first_client, context.first_request
+            )
+        if (
+            context.second_request is not None
+            and context.second_order is not None
+            and not context.second_order.is_terminal
+        ):
+            context.second_order = self._service.refresh(
+                context.second_client, context.second_request
+            )
+        return self._advance(
+            context, before_submit, defer_not_ready, confirm_deferred
+        )
+
+    def instruments_for(self, position_id: str) -> tuple[object, ...]:
+        try:
+            context = self._contexts[position_id]
+        except KeyError:
+            raise PositionDataError(
+                f"unknown close operation {position_id!r}"
+            ) from None
+        return (
+            context.original_position.first_leg.instrument,
+            context.original_position.second_leg.instrument,
+        )
+
+    def operation_for(self, event: Order | OrderFill) -> str | None:
+        for position_id, context in self._contexts.items():
+            requests = tuple(
+                request
+                for request in (context.first_request, context.second_request)
+                if request is not None
+            )
+            if any(event.client_order_id == request.client_order_id for request in requests):
+                return position_id
+        return None
 
     def retry(
         self,
@@ -160,6 +273,8 @@ class PositionCloseExecutor:
         *,
         first_reference_price: Decimal,
         second_reference_price: Decimal,
+        before_submit: Callable[[tuple[object, ...]], None] | None = None,
+        defer_not_ready: bool = False,
     ) -> PositionCloseResult:
         """Start a new user-requested attempt for a retryable terminal result."""
         known = self._results.get(position.position_id)
@@ -179,12 +294,16 @@ class PositionCloseExecutor:
             second_client,
             first_reference_price=first_reference_price,
             second_reference_price=second_reference_price,
+            before_submit=before_submit,
+            defer_not_ready=defer_not_ready,
         )
 
     def reconcile(
         self,
         position_id: str,
         event: Order | OrderFill,
+        before_submit: Callable[[tuple[object, ...]], None] | None = None,
+        defer_not_ready: bool = False,
     ) -> PositionCloseResult:
         """Apply a normalized REST/WS order event and advance sequential execution."""
         try:
@@ -210,15 +329,52 @@ class PositionCloseExecutor:
         else:
             raise PositionDataError("order event does not belong to this close operation")
         self._service.record(current)
-        return self._advance(context)
+        return self._advance(context, before_submit, defer_not_ready)
 
-    def _advance(self, context: _CloseContext) -> PositionCloseResult:
+    def _advance(
+        self,
+        context: _CloseContext,
+        before_submit: Callable[[tuple[object, ...]], None] | None = None,
+        defer_not_ready: bool = False,
+        confirm_deferred: bool = False,
+    ) -> PositionCloseResult:
         position = context.original_position
         first = context.first_order
         if context.first_request is not None:
             try:
-                first = first or self._service.submit(
-                    context.first_client, context.first_request
+                if (
+                    first is None
+                    and self._service.confirmation_required(position.position_id)
+                    and not confirm_deferred
+                ):
+                    return self._confirmation_result(context, position, first)
+                if first is None and before_submit is not None:
+                    try:
+                        before_submit(self.instruments_for(position.position_id))
+                    except RuntimeError as exc:
+                        if defer_not_ready:
+                            raise
+                        self._service.set_confirmation_required(
+                            position.position_id, True
+                        )
+                        return self._confirmation_result(
+                            context, position, first, error=exc
+                        )
+                confirmed_first = (
+                    first is None
+                    and confirm_deferred
+                    and self._service.confirmation_required(position.position_id)
+                )
+                first = first or (
+                    self._service.confirm_and_submit(
+                        context.first_client,
+                        context.first_request,
+                        position.position_id,
+                    )
+                    if confirmed_first
+                    else self._service.submit(
+                        context.first_client, context.first_request
+                    )
                 )
             except OrderStateUnknownError as exc:
                 updated = position.with_close_orders(None, None, PositionStatus.CLOSE_UNKNOWN)
@@ -239,8 +395,39 @@ class PositionCloseExecutor:
             updated = position.with_close_orders(first, None, PositionStatus.CLOSED)
             return self._store(context, _result(PositionCloseStatus.COMPLETED, updated, context.first_request, context.second_request, first=first))
         try:
-            second = context.second_order or self._service.submit(
-                context.second_client, context.second_request
+            if (
+                context.second_order is None
+                and self._service.confirmation_required(position.position_id)
+                and not confirm_deferred
+            ):
+                return self._confirmation_result(context, position, first)
+            if context.second_order is None and before_submit is not None:
+                try:
+                    before_submit(self.instruments_for(position.position_id))
+                except RuntimeError as exc:
+                    if defer_not_ready:
+                        raise
+                    self._service.set_confirmation_required(
+                        position.position_id, True
+                    )
+                    return self._confirmation_result(
+                        context, position, first, error=exc
+                    )
+            confirmed_second = (
+                context.second_order is None
+                and confirm_deferred
+                and self._service.confirmation_required(position.position_id)
+            )
+            second = context.second_order or (
+                self._service.confirm_and_submit(
+                    context.second_client,
+                    context.second_request,
+                    position.position_id,
+                )
+                if confirmed_second
+                else self._service.submit(
+                    context.second_client, context.second_request
+                )
             )
         except OrderStateUnknownError as exc:
             updated = position.with_close_orders(first, None, PositionStatus.CLOSE_UNKNOWN)
@@ -272,6 +459,29 @@ class PositionCloseExecutor:
         updated = position.with_close_orders(first, second, PositionStatus.CLOSED)
         return self._store(context, _result(PositionCloseStatus.COMPLETED, updated, context.first_request, context.second_request, first=first, second=second))
 
+    def _confirmation_result(
+        self,
+        context: _CloseContext,
+        position: ArbitragePosition,
+        first: Order | None,
+        *,
+        error: Exception | None = None,
+    ) -> PositionCloseResult:
+        updated = position.with_close_orders(
+            first, None, PositionStatus.CLOSE_UNKNOWN
+        )
+        return self._store(
+            context,
+            _result(
+                PositionCloseStatus.UNKNOWN,
+                updated,
+                context.first_request,
+                context.second_request,
+                first=first,
+                error=error or RuntimeError("explicit confirmation is required"),
+            ),
+        )
+
     def _store(
         self,
         context: _CloseContext,
@@ -279,6 +489,12 @@ class PositionCloseExecutor:
     ) -> PositionCloseResult:
         context.result = result
         self._results[context.original_position.position_id] = result
+        if result.status not in {
+            PositionCloseStatus.FIRST_PENDING,
+            PositionCloseStatus.SECOND_PENDING,
+            PositionCloseStatus.UNKNOWN,
+        }:
+            self._service.complete_context(context.original_position.position_id)
         return result
 
     def _close_request(
@@ -295,6 +511,9 @@ class PositionCloseExecutor:
             reference_price=reference_price,
             client_order_id=self._client_order_ids.create(role),
             position_side=leg.position_side,
+            reduce_only=(
+                leg.instrument.market_type is MarketType.USDT_PERPETUAL
+            ),
         )
 
 

@@ -148,6 +148,17 @@ def private_subscriptions() -> tuple[dict[str, str], ...]:
     )
 
 
+def parse_account_settings(payload: object) -> PositionMode:
+    response = _object(payload, "response")
+    data = _object(response.get("data"), "response.data")
+    mode = _text(data, "holdMode", "response.data")
+    if mode == "one_way_mode":
+        return PositionMode.ONE_WAY
+    if mode == "hedge_mode":
+        return PositionMode.HEDGE
+    raise AccountDataError(f"unknown holding mode {mode!r} at response.data")
+
+
 def parse_account(
     payload: object,
     received_time: datetime,

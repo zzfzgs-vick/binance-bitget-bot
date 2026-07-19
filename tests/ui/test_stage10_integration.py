@@ -4,6 +4,7 @@ from decimal import Decimal
 import os
 import time
 import threading
+import sys
 import unittest
 from unittest.mock import Mock
 
@@ -188,6 +189,118 @@ class Stage10PresenterTests(unittest.TestCase):
         view.dispose()
         self.app.processEvents()
 
+    def test_readiness_loss_requires_explicit_confirmation_before_deferred_submit(self) -> None:
+        from tests.domain.test_arbitrage_positions import _filled
+
+        view = MainWindowView()
+        plan = _plan()
+        ready = threading.Event()
+        ready.set()
+        first_client = Mock()
+        second_client = Mock()
+
+        def first_order(request):
+            ready.clear()
+            return _filled(request, "0.009", "60000", "0", "deferred-first")
+
+        first_client.create_order.side_effect = first_order
+        second_client.create_order.side_effect = lambda request: _filled(
+            request, "0.009", "60100", "0", "deferred-second"
+        )
+        worker = ExecutionWorker(
+            trading_clients={
+                (plan.first_request.instrument.exchange, plan.first_request.instrument.market_type): first_client,
+                (plan.second_request.instrument.exchange, plan.second_request.instrument.market_type): second_client,
+            }
+        )
+        worker.set_readiness_check(lambda _instruments: ready.is_set())
+        presenter = MainWindowPresenter(view, execution_worker=worker)
+        presenter.bind()
+        presenter.set_opportunities((plan,))
+        view.widgets.opportunity_table.selectRow(0)
+        self.app.processEvents()
+
+        view.widgets.live_order_button.click()
+        view.widgets.confirm_dual_leg_button.click()
+        self._wait_until(
+            lambda: view.widgets.live_order_button.text()
+            == "继续未发送的 LIVE 订单"
+        )
+        second_client.create_order.assert_not_called()
+
+        ready.set()
+        view.widgets.live_order_button.click()
+        self.assertTrue(view.widgets.confirm_dual_leg_button.isEnabled())
+        second_client.create_order.assert_not_called()
+        view.widgets.confirm_dual_leg_button.click()
+        self._wait_until(
+            lambda: view.widgets.position_table.model().rowCount() == 1
+        )
+
+        first_client.create_order.assert_called_once()
+        second_client.create_order.assert_called_once()
+        presenter.shutdown()
+        view.dispose()
+        self.app.processEvents()
+
+    def test_shutdown_drops_worker_callbacks_before_qt_objects_are_destroyed(self) -> None:
+        from tests.domain.test_arbitrage_positions import _filled
+
+        view = MainWindowView()
+        plan = _plan()
+        release = threading.Event()
+        first_client = Mock()
+        second_client = Mock()
+
+        def delayed(request):
+            release.wait(timeout=1)
+            return _filled(request, "0.009", "60000", "0", "shutdown-first")
+
+        first_client.create_order.side_effect = delayed
+        second_client.create_order.side_effect = lambda request: _filled(
+            request, "0.009", "60100", "0", "shutdown-second"
+        )
+        worker = ExecutionWorker(
+            trading_clients={
+                (plan.first_request.instrument.exchange, plan.first_request.instrument.market_type): first_client,
+                (plan.second_request.instrument.exchange, plan.second_request.instrument.market_type): second_client,
+            }
+        )
+        presenter = MainWindowPresenter(view, execution_worker=worker)
+        presenter.bind()
+        caught = []
+        previous_hook = sys.excepthook
+        sys.excepthook = lambda *details: caught.append(details)
+        try:
+            worker.submit_open(plan)
+            release.set()
+            presenter.shutdown()
+            view.dispose()
+            self.app.processEvents()
+        finally:
+            sys.excepthook = previous_hook
+        self.assertEqual(caught, [])
+
+    def test_queued_status_after_dispose_is_a_tested_no_op(self) -> None:
+        view = MainWindowView()
+        bridge = LiveEventBridge()
+        bridge.status_updated.connect(view.set_status)
+        caught = []
+        previous_hook = sys.excepthook
+        sys.excepthook = lambda *details: caught.append(details)
+        try:
+            publisher = threading.Thread(
+                target=bridge.publish_status, args=("queued status",)
+            )
+            publisher.start()
+            publisher.join(timeout=1)
+            view.dispose()
+            self.app.processEvents()
+        finally:
+            sys.excepthook = previous_hook
+            bridge.deleteLater()
+        self.assertEqual(caught, [])
+
     def test_background_live_state_enters_gui_only_through_qt_signal_bridge(self) -> None:
         view = MainWindowView()
         presenter = MainWindowPresenter(view)
@@ -315,7 +428,7 @@ class Stage10PresenterTests(unittest.TestCase):
         presenter = MainWindowPresenter(view, execution_worker=worker)
         presenter.bind()
         bridge = LiveEventBridge()
-        bridge.open_order_event.connect(worker.reconcile_open)
+        bridge.private_order_event.connect(worker.reconcile_private_order)
         presenter.set_opportunities((plan,))
         view.widgets.opportunity_table.selectRow(0)
         self.app.processEvents()
@@ -331,7 +444,7 @@ class Stage10PresenterTests(unittest.TestCase):
             cumulative_fee=Decimal("0.54"),
             updated_time=NOW + timedelta(milliseconds=1),
         )
-        bridge.publish_open_order_event(plan.position_id, completed)
+        bridge.publish_private_order_event(completed)
         self._wait_until(lambda: view.widgets.position_table.model().rowCount() == 1)
 
         self.assertEqual(second_client.create_order.call_count, 1)

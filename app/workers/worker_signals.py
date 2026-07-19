@@ -16,9 +16,21 @@ class LiveEventBridge(QObject):
     opportunities_updated = Signal(object)
     account_states_updated = Signal(object)
     position_prices_updated = Signal(str, object, object)
-    open_order_event = Signal(str, object)
-    close_order_event = Signal(str, object)
+    private_order_event = Signal(object)
     status_updated = Signal(str)
+
+    def disconnect_all(self) -> None:
+        for signal in (
+            self.opportunities_updated,
+            self.account_states_updated,
+            self.position_prices_updated,
+            self.private_order_event,
+            self.status_updated,
+        ):
+            try:
+                signal.disconnect()
+            except (RuntimeError, TypeError):
+                pass
 
     def publish_opportunities(
         self,
@@ -37,19 +49,8 @@ class LiveEventBridge(QObject):
     ) -> None:
         self.position_prices_updated.emit(position_id, first_price, second_price)
 
-    def publish_open_order_event(
-        self,
-        position_id: str,
-        event: Order | OrderFill,
-    ) -> None:
-        self.open_order_event.emit(position_id, event)
-
-    def publish_close_order_event(
-        self,
-        position_id: str,
-        event: Order | OrderFill,
-    ) -> None:
-        self.close_order_event.emit(position_id, event)
+    def publish_private_order_event(self, event: Order | OrderFill) -> None:
+        self.private_order_event.emit(event)
 
     def publish_status(self, message: str) -> None:
         self.status_updated.emit(message)

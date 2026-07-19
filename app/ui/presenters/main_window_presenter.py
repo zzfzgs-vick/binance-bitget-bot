@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from PySide6.QtCore import QObject
+from PySide6.QtCore import QObject, Signal
 
 from app.ui.models.executing_order_table_model import ExecutingOrderTableModel
 from app.ui.models.funding_history_table_model import FundingHistoryTableModel
@@ -23,6 +23,8 @@ from app.ui.views.main_window import MainWindowView
 
 class MainWindowPresenter(QObject):
     """Attach empty models and preserve a clean future application boundary."""
+
+    positions_changed = Signal(object)
 
     def __init__(
         self,
@@ -64,6 +66,12 @@ class MainWindowPresenter(QObject):
             self._order_entry_presenter.positions_changed.connect(
                 self._position_presenter.set_positions
             )
+            self._order_entry_presenter.positions_changed.connect(
+                self.positions_changed.emit
+            )
+            self._position_presenter.positions_changed.connect(
+                self.positions_changed.emit
+            )
 
     def bind(self) -> None:
         """Associate the loaded UI tables with their source-side models."""
@@ -87,12 +95,18 @@ class MainWindowPresenter(QObject):
     def set_opportunities(
         self, plans: tuple[ExecutableOpportunity, ...]
     ) -> None:
+        if self._is_shutdown:
+            return
         self._opportunity_presenter.set_opportunities(plans)
 
     def set_account_states(self, states: tuple[AccountState, ...]) -> None:
+        if self._is_shutdown:
+            return
         self._account_presenter.set_states(states)
 
     def set_positions(self, positions: tuple[ArbitragePosition, ...]) -> None:
+        if self._is_shutdown:
+            return
         self._position_presenter.set_positions(positions)
 
     def mark_position(
@@ -101,6 +115,8 @@ class MainWindowPresenter(QObject):
         first_price,
         second_price,
     ) -> None:
+        if self._is_shutdown:
+            return
         self._position_presenter.mark_position(
             position_id,
             first_price=first_price,
@@ -111,5 +127,8 @@ class MainWindowPresenter(QObject):
         if self._is_shutdown:
             return
         self._is_shutdown = True
+        self._position_presenter.shutdown()
+        if self._order_entry_presenter is not None:
+            self._order_entry_presenter.shutdown()
         if self._execution_worker is not None:
             self._execution_worker.shutdown()

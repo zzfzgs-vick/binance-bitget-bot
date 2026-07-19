@@ -34,7 +34,18 @@ def configure_logging(
     logger.setLevel(settings.level)
     logger.propagate = False
     for third_party_name in _THIRD_PARTY_LOGGERS:
-        logging.getLogger(third_party_name).setLevel(settings.third_party_level)
+        third_party = logging.getLogger(third_party_name)
+        if third_party_name == "websockets":
+            # DEBUG protocol records contain complete frames, including private
+            # authentication messages. Keep them outside every application sink.
+            third_party.setLevel(
+                max(logging.WARNING, logging.getLevelName(settings.third_party_level))
+            )
+            third_party.propagate = False
+            if not third_party.handlers:
+                third_party.addHandler(logging.NullHandler())
+        else:
+            third_party.setLevel(settings.third_party_level)
     managed_handlers = tuple(
         handler
         for handler in logger.handlers

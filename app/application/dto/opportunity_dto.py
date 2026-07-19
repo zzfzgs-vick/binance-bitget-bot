@@ -1,6 +1,7 @@
 """GUI-facing executable opportunity plan with explicit leg ordering."""
 
 from dataclasses import dataclass
+from datetime import datetime, timezone
 
 from app.domain.arbitrage.arbitrage_opportunity import ArbitrageOpportunity
 from app.domain.exceptions import OrderDataError
@@ -13,6 +14,7 @@ class ExecutableOpportunity:
     opportunity: ArbitrageOpportunity
     first_request: OrderRequest
     second_request: OrderRequest
+    expires_at: datetime | None = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.position_id, str) or not self.position_id.strip():
@@ -37,3 +39,11 @@ class ExecutableOpportunity:
         }
         if quantities != {self.opportunity.quantity}:
             raise OrderDataError("execution requests do not match opportunity quantity")
+        if self.expires_at is not None and self.expires_at.tzinfo is None:
+            raise OrderDataError("expires_at must include timezone information")
+
+    def is_expired(self, now: datetime | None = None) -> bool:
+        if self.expires_at is None:
+            return False
+        current = now or datetime.now(timezone.utc)
+        return current >= self.expires_at

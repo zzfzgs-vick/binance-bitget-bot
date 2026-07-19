@@ -1,14 +1,17 @@
 """Synchronous Binance USD-margined perpetual order operations."""
 
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any
 
 from app.domain.enums import Exchange, MarketType
-from app.domain.orders.order import Order, OrderRequest, OrderType
+from app.domain.orders.order import FuturesPositionSide, Order, OrderRequest, OrderType
 from app.domain.orders.fill import OrderFill
 from app.exchanges.binance.constants import (
     BINANCE_FUTURES_BASE_URL,
     BINANCE_FUTURES_FILLS_PATH,
+    BINANCE_FUTURES_LISTEN_KEY_PATH,
+    BINANCE_FUTURES_COMMISSION_PATH,
     BINANCE_FUTURES_ORDER_PATH,
 )
 from app.exchanges.binance.mappers.order_mapper import parse_fills, parse_order
@@ -19,6 +22,30 @@ from app.infrastructure.decimal.formatting import decimal_text
 
 class BinanceFuturesTradingClient(BinanceRestClient):
     BASE_URL = BINANCE_FUTURES_BASE_URL
+
+    def get_taker_fee_rate(self, symbol: str) -> Decimal:
+        payload = self.private_request(
+            "GET", BINANCE_FUTURES_COMMISSION_PATH, {"symbol": symbol}
+        )
+        try:
+            return Decimal(payload["takerCommissionRate"])
+        except (KeyError, TypeError, ValueError):
+            raise ValueError("Binance futures commission response is invalid") from None
+
+    def create_listen_key(self) -> str:
+        payload = self.api_key_request("POST", BINANCE_FUTURES_LISTEN_KEY_PATH)
+        if not isinstance(payload, dict) or not isinstance(payload.get("listenKey"), str):
+            raise ValueError("Binance listen-key response is missing listenKey")
+        listen_key = payload["listenKey"].strip()
+        if not listen_key:
+            raise ValueError("Binance listen-key response contains an empty listenKey")
+        return listen_key
+
+    def keepalive_listen_key(self) -> None:
+        self.api_key_request("PUT", BINANCE_FUTURES_LISTEN_KEY_PATH)
+
+    def close_listen_key(self) -> None:
+        self.api_key_request("DELETE", BINANCE_FUTURES_LISTEN_KEY_PATH)
 
     def create_order(self, request: OrderRequest) -> Order:
         _request_market(request)
@@ -86,6 +113,8 @@ def _create_params(request: OrderRequest) -> dict[str, object]:
         )
     if request.position_side is not None:
         params["positionSide"] = request.position_side.value.upper()
+    if request.reduce_only and request.position_side in (None, FuturesPositionSide.BOTH):
+        params["reduceOnly"] = "true"
     return params
 
 

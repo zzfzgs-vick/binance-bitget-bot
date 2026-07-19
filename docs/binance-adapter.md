@@ -5,12 +5,12 @@
 - No exchange SDK or alternate HTTP/WebSocket framework.
 - Spot and USDⓈ-M public WebSocket clients support production subscriptions,
   unsubscriptions, protocol ping/pong, bounded reconnect, and subscription restore.
-- Private WebSocket classes expose production entry points only. Existing futures
-  listen keys can be supplied, but acquiring, renewing, or deleting them is outside
-  this stage. Spot session authentication is also deferred.
-- WebSocket transport messages remain available as raw JSON. Stage 6 additionally
-  maps the supported public market messages into domain market-data events; account
-  and order normalization remain out of scope.
+- Private WebSocket classes expose production entry points only. Spot validates the
+  signed user-data subscription acknowledgement. USDⓈ-M creates, periodically
+  renews, rebuilds after expiry, and closes its listen key.
+- WebSocket transport messages remain available as raw JSON and supported public,
+  account, position, order, and fill messages are normalized before application
+  state or execution reconciliation consumes them.
 - Spot and USDⓈ-M exchange-information payloads are normalized into domain
   instruments from official asset, status, price-filter, lot-size, and minimum-
   notional fields. Missing, invalid, duplicate, or conflicting rules are errors.

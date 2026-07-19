@@ -1,6 +1,8 @@
 from dataclasses import replace
 from datetime import timedelta
 from decimal import Decimal
+from pathlib import Path
+from tempfile import TemporaryDirectory
 import unittest
 from unittest.mock import Mock
 
@@ -13,10 +15,69 @@ from app.exchanges.base.exchange_errors import (
     ExchangeTimeoutError,
 )
 from app.execution.position_close_executor import PositionCloseExecutor, PositionCloseStatus
+from app.execution.order_recovery_service import IdempotentOrderService
 from tests.domain.test_arbitrage_positions import NOW, _filled, _result
 
 
 class PositionCloseExecutionTests(unittest.TestCase):
+    def test_readiness_loss_before_submit_returns_recoverable_close_state(self) -> None:
+        position = ArbitragePosition.from_execution(
+            "position-readiness", _result(), NOW
+        )
+        first_client = Mock()
+        second_client = Mock()
+        first_client.create_order.side_effect = lambda request: _filled(
+            request, "0.009", "60200", "0", "close-ready-1"
+        )
+        second_client.create_order.side_effect = lambda request: _filled(
+            request, "0.009", "59900", "0", "close-ready-2"
+        )
+        executor = PositionCloseExecutor()
+
+        waiting = executor.start(
+            position,
+            first_client,
+            second_client,
+            first_reference_price=Decimal("60200"),
+            second_reference_price=Decimal("59900"),
+            before_submit=Mock(side_effect=RuntimeError("private stream lost")),
+        )
+        completed = executor.resume(position.position_id, Mock())
+
+        self.assertEqual(waiting.status, PositionCloseStatus.UNKNOWN)
+        self.assertEqual(completed.status, PositionCloseStatus.COMPLETED)
+        first_client.create_order.assert_called_once()
+        second_client.create_order.assert_called_once()
+
+    def test_close_recovery_journal_preserves_original_position(self) -> None:
+        position = ArbitragePosition.from_execution("position-restart", _result(), NOW)
+        first_client = Mock()
+        second_client = Mock()
+
+        def submitted(request):
+            return replace(
+                _filled(request, "0.004", "60200", "0", "close-pending"),
+                status=OrderStatus.SUBMITTED,
+            )
+
+        first_client.create_order.side_effect = submitted
+        with TemporaryDirectory() as directory:
+            path = Path(directory) / "orders.json"
+            service = IdempotentOrderService(journal_path=path)
+            PositionCloseExecutor(service).start(
+                position,
+                first_client,
+                second_client,
+                first_reference_price=Decimal("60200"),
+                second_reference_price=Decimal("59900"),
+            )
+
+            recovered = IdempotentOrderService(journal_path=path)
+
+        (context,) = recovered.recovery_contexts
+        self.assertEqual(context.kind, "close")
+        self.assertEqual(context.position, position)
+
     def test_close_uses_reverse_orders_and_actual_remaining_quantities(self) -> None:
         position = ArbitragePosition.from_execution("position-close", _result(), NOW)
         first_client = Mock()
@@ -44,6 +105,8 @@ class PositionCloseExecutionTests(unittest.TestCase):
         self.assertEqual(result.second_request.side, OrderSide.BUY)
         self.assertEqual(result.first_request.quantity, Decimal("0.009"))
         self.assertEqual(result.second_request.quantity, Decimal("0.009"))
+        self.assertFalse(result.first_request.reduce_only)
+        self.assertTrue(result.second_request.reduce_only)
         self.assertEqual(result.position.status, PositionStatus.CLOSED)
         self.assertEqual(result.position.first_leg.remaining_quantity, Decimal("0"))
         self.assertEqual(result.position.second_leg.remaining_quantity, Decimal("0"))

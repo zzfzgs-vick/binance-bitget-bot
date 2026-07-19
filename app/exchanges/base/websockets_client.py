@@ -18,6 +18,10 @@ ErrorHandler = Callable[[Exception], None]
 Connector = Callable[..., Any]
 _LOGGER = logging.getLogger("binance_bitget_bot.exchanges.websocket")
 _LOGGER.addHandler(logging.NullHandler())
+_TRANSPORT_LOGGER = logging.getLogger("binance_bitget_bot.websocket.protocol")
+_TRANSPORT_LOGGER.setLevel(logging.WARNING)
+_TRANSPORT_LOGGER.propagate = False
+_TRANSPORT_LOGGER.addHandler(logging.NullHandler())
 
 
 class WebSocketClientError(RuntimeError):
@@ -46,6 +50,7 @@ class ThreadedWebSocketClient:
         connector: Connector = websockets.connect,
         on_message: MessageHandler | None = None,
         on_error: ErrorHandler | None = None,
+        on_stopped: Callable[[], None] | None = None,
         heartbeat_interval: float = 30.0,
         heartbeat_timeout: float = 10.0,
         reconnect_attempts: int = 3,
@@ -64,6 +69,7 @@ class ThreadedWebSocketClient:
         self._connector = connector
         self._on_message = on_message
         self._on_error = on_error
+        self._on_stopped = on_stopped
         self._heartbeat_interval = heartbeat_interval
         self._heartbeat_timeout = heartbeat_timeout
         self._reconnect_attempts = reconnect_attempts
@@ -182,6 +188,13 @@ class ThreadedWebSocketClient:
             self._websocket = None
             self._task = None
             self._loop = None
+            if self._on_stopped is not None:
+                try:
+                    self._on_stopped()
+                except Exception:
+                    self._logger.error(
+                        "%s WebSocket stopped handler failed", self._name
+                    )
 
     async def _run(self) -> None:
         reconnect_number = 0
@@ -227,6 +240,7 @@ class ThreadedWebSocketClient:
             self._url,
             ping_interval=None,
             close_timeout=self._heartbeat_timeout,
+            logger=_TRANSPORT_LOGGER,
         ) as websocket:
             self._websocket = websocket
             try:

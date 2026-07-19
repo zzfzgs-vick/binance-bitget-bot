@@ -33,6 +33,7 @@ class MainWindowView(QObject):
         parent: QObject | None = None,
     ) -> None:
         super().__init__(parent)
+        self._is_disposed = False
         self.window = load_typed_ui(
             ui_path or ui_form_path("mainwindow.ui"),
             QMainWindow,
@@ -83,6 +84,9 @@ class MainWindowView(QObject):
 
     def dispose(self) -> None:
         """Close the top-level window and schedule owned Qt objects for deletion."""
+        if self._is_disposed:
+            return
+        self._is_disposed = True
         self.window.close()
         self.window.deleteLater()
         self.deleteLater()
@@ -137,6 +141,25 @@ class MainWindowView(QObject):
             business_input.setEnabled(False)
             business_input.setToolTip("后续阶段接入真实业务后可用")
 
+    def set_live_capabilities(self, *, accounts_available: bool) -> None:
+        """Enable only controls backed by the running LIVE data chain."""
+        self.widgets.refresh_products_button.setEnabled(True)
+        self.widgets.refresh_products_button.setToolTip("刷新正式实盘产品")
+        self.widgets.refresh_accounts_button.setEnabled(accounts_available)
+        self.widgets.refresh_accounts_button.setToolTip(
+            "刷新正式实盘账户" if accounts_available else "API 凭据不完整"
+        )
+        for widget in (self.widgets.symbol_search, self.widgets.spot_investment):
+            widget.setEnabled(accounts_available)
+            widget.setToolTip(
+                "正式实盘行情输入" if accounts_available else "API 凭据不完整"
+            )
+        self.widgets.symbol_search.setPlaceholderText("输入 BTCUSDT 或 BTC/USDT")
+        self.widgets.refresh_quote_button.setEnabled(accounts_available)
+        self.widgets.refresh_quote_button.setToolTip(
+            "订阅并计算正式实盘机会" if accounts_available else "API 凭据不完整"
+        )
+
     def set_opportunity_model(self, model: QAbstractItemModel) -> None:
         self.widgets.opportunity_table.setModel(model)
 
@@ -153,6 +176,8 @@ class MainWindowView(QObject):
         self.widgets.funding_history_table.setModel(model)
 
     def set_status(self, message: str, *, warning: bool = False) -> None:
+        if self._is_disposed:
+            return
         if not isinstance(message, str) or not message.strip():
             raise ValueError("status message must be a non-empty string")
         self.widgets.system_ready_status_label.setText(f"●  {message}")

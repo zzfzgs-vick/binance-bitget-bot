@@ -1,5 +1,6 @@
 """Sequential two-leg submission without compensation or position management."""
 
+from dataclasses import replace
 from decimal import Decimal
 
 from app.domain.exceptions import OrderDataError, TradingRuleError
@@ -72,6 +73,7 @@ class DualLegExecutor:
             return DualLegExecutionResult(DualLegStatus.FIRST_INCOMPLETE, first, None)
 
         try:
+            second_request = prepare_follow_up_request(first_order, second_request)
             second_order = self._service.submit(second_client, second_request)
         except _EXPECTED_FAILURES as exc:
             return DualLegExecutionResult(
@@ -135,6 +137,19 @@ def prepare_dual_leg_requests(
             "two legs have different normalized base quantities"
         )
     return first, second
+
+
+def prepare_follow_up_request(
+    first_order,
+    second_request: OrderRequest,
+) -> OrderRequest:
+    """Quantize the second leg from the first leg's actual base fill."""
+    base_quantity = first_order.instrument.rules.normalize_common_base_quantity(
+        second_request.instrument.rules,
+        first_order.filled_base_quantity,
+    )
+    quantity = base_quantity / second_request.instrument.rules.contract_multiplier
+    return prepare_order(replace(second_request, quantity=quantity))
 
 
 _EXPECTED_FAILURES = (

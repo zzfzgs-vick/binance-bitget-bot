@@ -92,6 +92,24 @@ class BinanceRestClient:
             extra_secrets=(signed_params["signature"],),
         )
 
+    def api_key_request(
+        self,
+        method: str,
+        path: str,
+        params: Mapping[str, object] | None = None,
+    ) -> Any:
+        """Call an API-key-only endpoint without adding a request signature."""
+        method = _method(method)
+        _path(path)
+        api_key, _secret = self._required_credentials()
+        self._logger.debug("Binance API-key %s %s", method, path)
+        return self._send(
+            method,
+            path,
+            params=dict(params) if params else None,
+            headers={"X-MBX-APIKEY": api_key},
+        )
+
     def _required_credentials(self) -> tuple[str, str]:
         missing = []
         if not self._credentials.binance_api_key.strip():

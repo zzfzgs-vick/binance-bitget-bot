@@ -1,12 +1,14 @@
 """Synchronous Binance Spot order operations."""
 
 from datetime import datetime, timezone
+from decimal import Decimal
 from typing import Any
 
 from app.domain.enums import Exchange, MarketType
 from app.domain.orders.order import Order, OrderRequest, OrderType
 from app.domain.orders.fill import OrderFill
 from app.exchanges.binance.constants import (
+    BINANCE_SPOT_COMMISSION_PATH,
     BINANCE_SPOT_BASE_URL,
     BINANCE_SPOT_FILLS_PATH,
     BINANCE_SPOT_ORDER_PATH,
@@ -19,6 +21,15 @@ from app.infrastructure.decimal.formatting import decimal_text
 
 class BinanceSpotTradingClient(BinanceRestClient):
     BASE_URL = BINANCE_SPOT_BASE_URL
+
+    def get_taker_fee_rate(self, symbol: str) -> Decimal:
+        payload = self.private_request(
+            "GET", BINANCE_SPOT_COMMISSION_PATH, {"symbol": symbol}
+        )
+        try:
+            return Decimal(payload["standardCommission"]["taker"])
+        except (KeyError, TypeError, ValueError):
+            raise ValueError("Binance Spot commission response is invalid") from None
 
     def create_order(self, request: OrderRequest) -> Order:
         _request_market(request)

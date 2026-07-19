@@ -49,6 +49,12 @@ class PositionService:
             )
         self._positions[position.position_id] = position
 
+    def restore(self, position: ArbitragePosition) -> None:
+        """Insert a position recovered from the durable close-operation journal."""
+        if not isinstance(position, ArbitragePosition):
+            raise TypeError("position must be ArbitragePosition")
+        self._positions[position.position_id] = position
+
     def replace_all(self, positions: tuple[ArbitragePosition, ...]) -> None:
         if len({position.position_id for position in positions}) != len(positions):
             raise PositionDataError("positions contain duplicate position_id values")

@@ -19,6 +19,7 @@ def main() -> int:
     try:
         runtime = build_application()
         runtime.main_window.show()
+        runtime.start()
         return qt_app.exec()
     finally:
         if runtime is not None:

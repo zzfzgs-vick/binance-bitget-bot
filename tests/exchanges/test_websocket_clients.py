@@ -12,7 +12,6 @@ from unittest.mock import Mock
 
 from app.exchanges.binance.constants import BINANCE_SPOT_PUBLIC_WS_URL
 from app.exchanges.binance.constants import (
-    BINANCE_FUTURES_MARKET_WS_URL,
     BINANCE_FUTURES_PRIVATE_WS_BASE_URL,
     BINANCE_FUTURES_PUBLIC_WS_URL,
     BINANCE_SPOT_PRIVATE_WS_URL,
@@ -22,6 +21,7 @@ from app.exchanges.binance.websocket.futures_public_ws import (
 )
 from app.exchanges.binance.websocket.futures_private_ws import (
     BinanceFuturesPrivateWebSocketClient,
+    BinanceFuturesPrivateStream,
 )
 from app.exchanges.binance.websocket.spot_public_ws import (
     BinanceSpotPublicWebSocketClient,
@@ -148,11 +148,15 @@ class WebSocketClientTests(unittest.TestCase):
         _wait_for(lambda: len(callback_threads) == 1)
         client.close()
 
-        connector.assert_called_once_with(
-            BINANCE_SPOT_PUBLIC_WS_URL,
-            ping_interval=None,
-            close_timeout=10.0,
+        connector.assert_called_once()
+        call = connector.call_args
+        self.assertEqual(call.args, (BINANCE_SPOT_PUBLIC_WS_URL,))
+        self.assertIsNone(call.kwargs["ping_interval"])
+        self.assertEqual(call.kwargs["close_timeout"], 10.0)
+        self.assertEqual(
+            call.kwargs["logger"].name, "binance_bitget_bot.websocket.protocol"
         )
+        self.assertGreaterEqual(call.kwargs["logger"].level, logging.WARNING)
         self.assertEqual(
             json.loads(websocket.sent[0]),
             {
@@ -209,15 +213,12 @@ class WebSocketClientTests(unittest.TestCase):
 
     def test_futures_public_routes_are_explicit_production_endpoints(self) -> None:
         public = BinanceFuturesPublicWebSocketClient(
-            route="public", connector=_Connector(_FakeWebSocket())
-        )
-        market = BinanceFuturesPublicWebSocketClient(
-            route="market", connector=_Connector(_FakeWebSocket())
+            connector=_Connector(_FakeWebSocket())
         )
         self.assertEqual(public.endpoint, BINANCE_FUTURES_PUBLIC_WS_URL)
-        self.assertEqual(market.endpoint, BINANCE_FUTURES_MARKET_WS_URL)
-        with self.assertRaisesRegex(ValueError, "route"):
-            BinanceFuturesPublicWebSocketClient(route="unknown")
+        self.assertEqual(
+            public.endpoint, "wss://fstream.binance.com/public/stream"
+        )
 
     def test_binance_private_entry_accepts_existing_listen_key_only(self) -> None:
         websocket = _FakeWebSocket()
@@ -237,16 +238,153 @@ class WebSocketClientTests(unittest.TestCase):
         self.assertEqual(websocket.sent, [])
         with self.assertRaisesRegex(ValueError, "listen key"):
             BinanceFuturesPrivateWebSocketClient(" ")
-        with self.assertRaisesRegex(NotImplementedError, "later stage"):
+        with self.assertRaisesRegex(NotImplementedError, "do not accept"):
             client.subscribe("btcusdt@trade")
 
     def test_binance_spot_private_entry_disables_market_stream_controls(self) -> None:
-        client = BinanceSpotPrivateWebSocketClient()
+        websocket = _FakeWebSocket()
+        websocket.incoming.put_nowait(
+            '{"id":"1","status":200,"result":{"subscriptionId":7}}'
+        )
+        client = BinanceSpotPrivateWebSocketClient(
+            credentials=ApiCredentials(
+                binance_api_key="spot-key", binance_api_secret="spot-secret"
+            ),
+            connector=_Connector(websocket),
+            clock_ms=lambda: 1700000000000,
+        )
 
-        with self.assertRaisesRegex(NotImplementedError, "later stage"):
+        client.start()
+        _wait_for(lambda: client.is_connected)
+        client.close()
+        message = json.loads(websocket.sent[0])
+        self.assertEqual(message["method"], "userDataStream.subscribe.signature")
+        self.assertEqual(message["params"]["apiKey"], "spot-key")
+        self.assertIn("signature", message["params"])
+
+        with self.assertRaisesRegex(NotImplementedError, "do not accept"):
             client.subscribe("btcusdt@trade")
-        with self.assertRaisesRegex(NotImplementedError, "later stage"):
+        with self.assertRaisesRegex(NotImplementedError, "do not accept"):
             client.unsubscribe("btcusdt@trade")
+
+    def test_binance_spot_private_rejects_failed_authentication_ack(self) -> None:
+        websocket = _FakeWebSocket()
+        websocket.incoming.put_nowait(
+            '{"id":"1","status":401,"error":{"code":-2015}}'
+        )
+        errors = []
+        client = BinanceSpotPrivateWebSocketClient(
+            credentials=ApiCredentials(
+                binance_api_key="spot-key", binance_api_secret="spot-secret"
+            ),
+            connector=_Connector(websocket),
+            clock_ms=lambda: 1700000000000,
+            reconnect_attempts=0,
+            on_error=errors.append,
+        )
+
+        client.start()
+        _wait_for(lambda: bool(errors))
+        client.close()
+
+        self.assertIsInstance(errors[0], WebSocketProtocolError)
+
+    def test_binance_spot_private_authentication_ack_times_out(self) -> None:
+        errors = []
+        client = BinanceSpotPrivateWebSocketClient(
+            credentials=ApiCredentials(
+                binance_api_key="spot-key", binance_api_secret="spot-secret"
+            ),
+            connector=_Connector(_FakeWebSocket()),
+            heartbeat_timeout=0.01,
+            reconnect_attempts=0,
+            on_error=errors.append,
+        )
+
+        client.start()
+        _wait_for(lambda: bool(errors))
+        client.close()
+
+        self.assertIsInstance(errors[0], WebSocketTimeoutError)
+
+    def test_binance_futures_listen_key_is_renewed_rebuilt_and_closed(self) -> None:
+        rest = Mock()
+        rest.create_listen_key.side_effect = ["key-one", "key-two"]
+        rest.keepalive_listen_key.side_effect = RuntimeError("expired")
+        sockets = []
+
+        def factory(key, **_kwargs):
+            socket = Mock()
+            socket.key = key
+            sockets.append(socket)
+            return socket
+
+        stream = BinanceFuturesPrivateStream(
+            rest,
+            websocket_factory=factory,
+            keepalive_seconds=0.01,
+        )
+        stream.start()
+        _wait_for(lambda: len(sockets) == 2)
+        stream.stop()
+        stream.stop()
+
+        self.assertEqual([socket.key for socket in sockets], ["key-one", "key-two"])
+        sockets[0].stop.assert_called_once()
+        sockets[1].stop.assert_called_once()
+        self.assertGreaterEqual(rest.close_listen_key.call_count, 2)
+
+    def test_binance_futures_expiry_event_rebuilds_the_private_stream(self) -> None:
+        rest = Mock()
+        rest.create_listen_key.side_effect = ["key-one", "key-two"]
+        sockets = []
+
+        def factory(key, **kwargs):
+            socket = Mock()
+            socket.key = key
+            socket.on_message = kwargs["on_message"]
+            sockets.append(socket)
+            return socket
+
+        stream = BinanceFuturesPrivateStream(
+            rest,
+            websocket_factory=factory,
+            keepalive_seconds=60,
+        )
+        stream.start()
+        sockets[0].on_message(
+            '{"e":"listenKeyExpired"}',
+            {"e": "listenKeyExpired"},
+        )
+        _wait_for(lambda: len(sockets) == 2)
+        stream.stop()
+
+        self.assertEqual([socket.key for socket in sockets], ["key-one", "key-two"])
+        rest.keepalive_listen_key.assert_not_called()
+
+    def test_binance_futures_exhausted_websocket_rebuilds_stream(self) -> None:
+        rest = Mock()
+        rest.create_listen_key.side_effect = ["key-one", "key-two"]
+        sockets = []
+
+        def factory(key, **kwargs):
+            socket = Mock()
+            socket.key = key
+            socket.on_stopped = kwargs["on_stopped"]
+            sockets.append(socket)
+            return socket
+
+        stream = BinanceFuturesPrivateStream(
+            rest,
+            websocket_factory=factory,
+            keepalive_seconds=60,
+        )
+        stream.start()
+        sockets[0].on_stopped()
+        _wait_for(lambda: len(sockets) == 2)
+        stream.stop()
+
+        self.assertEqual([socket.key for socket in sockets], ["key-one", "key-two"])
 
     def test_bitget_subscription_and_unsubscription_messages(self) -> None:
         websocket = _FakeWebSocket()
@@ -344,6 +482,57 @@ class WebSocketClientTests(unittest.TestCase):
             any(isinstance(error, WebSocketProtocolError) for error in errors)
         )
 
+    def test_bitget_private_is_ready_only_after_subscription_ack(self) -> None:
+        credentials = ApiCredentials(
+            bitget_api_key="test-key",
+            bitget_api_secret="test-secret",
+            bitget_api_passphrase="test-passphrase",
+        )
+        websocket = _FakeWebSocket()
+        websocket.incoming.put_nowait('{"event":"login","code":"0","msg":""}')
+        websocket.incoming.put_nowait(
+            '{"event":"subscribe","arg":{"instType":"UTA","topic":"account"}}'
+        )
+        client = BitgetSpotPrivateWebSocketClient(
+            credentials,
+            connector=_Connector(websocket),
+            clock_seconds=lambda: 1700000000,
+        )
+        client.subscribe({"instType": "UTA", "topic": "account"})
+        self.assertFalse(client.is_connected)
+
+        client.start()
+        _wait_for(lambda: client.is_connected)
+        client.close()
+
+    def test_bitget_private_subscription_rejection_disconnects(self) -> None:
+        credentials = ApiCredentials(
+            bitget_api_key="test-key",
+            bitget_api_secret="test-secret",
+            bitget_api_passphrase="test-passphrase",
+        )
+        websocket = _FakeWebSocket()
+        websocket.incoming.put_nowait('{"event":"login","code":"0","msg":""}')
+        websocket.incoming.put_nowait(
+            '{"event":"subscribe","code":"30001","msg":"rejected"}'
+        )
+        errors: list[Exception] = []
+        client = BitgetSpotPrivateWebSocketClient(
+            credentials,
+            connector=_Connector(websocket),
+            reconnect_attempts=0,
+            on_error=errors.append,
+        )
+        client.subscribe({"instType": "UTA", "topic": "account"})
+
+        client.start()
+        _wait_for(lambda: not client.is_running)
+
+        self.assertFalse(client.is_connected)
+        self.assertTrue(
+            any(isinstance(error, WebSocketProtocolError) for error in errors)
+        )
+
     def test_bitget_private_client_rejects_incomplete_credentials(self) -> None:
         with self.assertRaisesRegex(
             ExchangeCredentialsError, "BITGET_API_PASSPHRASE"
@@ -360,7 +549,6 @@ class WebSocketClientTests(unittest.TestCase):
             BINANCE_SPOT_PUBLIC_WS_URL,
             BINANCE_SPOT_PRIVATE_WS_URL,
             BINANCE_FUTURES_PUBLIC_WS_URL,
-            BINANCE_FUTURES_MARKET_WS_URL,
             BINANCE_FUTURES_PRIVATE_WS_BASE_URL,
             BITGET_PUBLIC_WS_URL,
             BITGET_PRIVATE_WS_URL,

@@ -1,9 +1,10 @@
 """Present current arbitrage positions in existing table and detail widgets."""
 
 from decimal import Decimal
+from datetime import datetime, timedelta, timezone
 import logging
 
-from PySide6.QtCore import QObject, Slot
+from PySide6.QtCore import QObject, Signal, Slot
 
 from app.application.services.position_service import PositionService
 from app.domain.arbitrage.arbitrage_position import ArbitragePosition, PositionStatus
@@ -16,6 +17,7 @@ _LOGGER = logging.getLogger("binance_bitget_bot.ui.positions")
 
 
 class PositionPresenter(QObject):
+    positions_changed = Signal(object)
     def __init__(
         self,
         view: MainWindowView,
@@ -29,15 +31,38 @@ class PositionPresenter(QObject):
         self._model = model
         self._position_service = positions or PositionService()
         self._worker = worker
-        self._close_prices: dict[str, tuple[Decimal, Decimal]] = {}
+        self._close_prices: dict[
+            str, tuple[Decimal, Decimal, datetime]
+        ] = {}
         self._retryable_close_ids: set[str] = set()
         self._positions: tuple[ArbitragePosition, ...] = ()
+        self._is_shutdown = False
         view.widgets.position_table.clicked.connect(self._show_selected)
         if worker is not None:
             view.close_position_requested.connect(self._request_close)
             worker.close_completed.connect(self._close_completed)
 
+    def shutdown(self) -> None:
+        if self._is_shutdown:
+            return
+        self._is_shutdown = True
+        connections = [(self._view.widgets.position_table.clicked, self._show_selected)]
+        if self._worker is not None:
+            connections.extend(
+                (
+                    (self._view.close_position_requested, self._request_close),
+                    (self._worker.close_completed, self._close_completed),
+                )
+            )
+        for signal, slot in connections:
+            try:
+                signal.disconnect(slot)
+            except (RuntimeError, TypeError):
+                pass
+
     def set_positions(self, positions: tuple[ArbitragePosition, ...]) -> None:
+        if self._is_shutdown:
+            return
         if not all(isinstance(position, ArbitragePosition) for position in positions):
             raise TypeError("positions must contain ArbitragePosition values")
         self._positions = positions
@@ -60,7 +85,11 @@ class PositionPresenter(QObject):
             first_price=first_price,
             second_price=second_price,
         )
-        self._close_prices[position_id] = (first_price, second_price)
+        self._close_prices[position_id] = (
+            first_price,
+            second_price,
+            datetime.now(timezone.utc),
+        )
         self.set_positions(
             tuple(
                 position if item.position_id == position_id else item
@@ -79,26 +108,49 @@ class PositionPresenter(QObject):
                 "平仓前需要最新的两腿市场价格", warning=True
             )
             return
+        if datetime.now(timezone.utc) - prices[2] > timedelta(seconds=5):
+            self._close_prices.pop(position_id, None)
+            self._view.set_status(
+                "平仓价格已过期，请等待两腿最新市场价格", warning=True
+            )
+            return
         if position.status is PositionStatus.CLOSED:
             return
         if position.status is PositionStatus.CLOSE_UNKNOWN:
-            self._worker.resume_close(position_id)
+            try:
+                self._worker.resume_close(position_id)
+            except RuntimeError as exc:
+                self._view.set_status(str(exc), warning=True)
+            return
+        if position.status is PositionStatus.PARTIALLY_CLOSED:
+            try:
+                self._worker.resume_close(position_id)
+            except RuntimeError as exc:
+                self._view.set_status(str(exc), warning=True)
             return
         if position_id in self._retryable_close_ids:
-            self._worker.retry_close(
+            try:
+                self._worker.retry_close(
+                    position,
+                    first_reference_price=prices[0],
+                    second_reference_price=prices[1],
+                )
+            except RuntimeError as exc:
+                self._view.set_status(str(exc), warning=True)
+            return
+        try:
+            self._worker.submit_close(
                 position,
                 first_reference_price=prices[0],
                 second_reference_price=prices[1],
             )
-            return
-        self._worker.submit_close(
-            position,
-            first_reference_price=prices[0],
-            second_reference_price=prices[1],
-        )
+        except RuntimeError as exc:
+            self._view.set_status(str(exc), warning=True)
 
     @Slot(str, object)
     def _close_completed(self, position_id: str, result) -> None:
+        if self._is_shutdown:
+            return
         position = result.position
         prices = self._close_prices.get(position_id)
         if prices is not None and position.status is not PositionStatus.CLOSED:
@@ -106,12 +158,13 @@ class PositionPresenter(QObject):
                 first_price=prices[0],
                 second_price=prices[1],
             )
-        self._position_service.update(position)
+        self._position_service.restore(position)
         if result.can_retry:
             self._retryable_close_ids.add(position_id)
         else:
             self._retryable_close_ids.discard(position_id)
         self.set_positions(self._position_service.positions)
+        self.positions_changed.emit(self._position_service.positions)
         warning = result.requires_attention
         self._view.set_status(
             f"双腿平仓结果 {position_id}：{result.status.value}",
